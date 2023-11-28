@@ -6,7 +6,7 @@ from typing import Literal
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 800
-SCREEN_PADDING = 100
+SCREEN_PADDING = 140
 
 WHITE = (255, 255, 255)
 LIGHT_GREY = (200, 200, 200)
@@ -199,8 +199,8 @@ def game_over(player,new_board):
     GRID = new_board
     SCREEN.fill(BG_COLOR)
     OVER_FONT = pygame.font.SysFont("monospace", 40)
-    label = OVER_FONT.render(f"Player {player} wins",1,PIECE_COLOR[player])
-    SCREEN.blit(label,(SCREEN_PADDING+label.get_width()//2,20))
+    label = OVER_FONT.render(f"Player {player} wins", 1, PIECE_COLOR[player])
+    SCREEN.blit(label,(SCREEN_WIDTH//2-label.get_width()//2, SCREEN_PADDING//2-label.get_height()//2))
     pygame.display.flip()
 
 
@@ -209,6 +209,6 @@ def show_pieces_amount():
     PIECE_FONT = pygame.font.SysFont("monospace", 40)
     label1 = PIECE_FONT.render("50",1,PIECE_COLOR[1])    #trocar "50" por função piece_count(player)
     label2 = PIECE_FONT.render("50",1,PIECE_COLOR[2])    #trocar "50" por função piece_count(player)
-    SCREEN.blit(label1,(725,20))
-    SCREEN.blit(label2,(20,20))
+    SCREEN.blit(label1,(SCREEN_PADDING//2, SCREEN_PADDING//2-label1.get_height()//2))
+    SCREEN.blit(label2,(SCREEN_WIDTH-SCREEN_PADDING//2-label2.get_width() , SCREEN_PADDING//2-label2.get_height()//2))
     # Falta adicionar o ícone de cada player do lado de fora do count
