@@ -6,6 +6,7 @@ class AttaxxBoard:
         self.size = dim
         self.board = np.zeros((self.size,self.size),dtype=int)
         self.player = 1
+        self.winner = 0
         
     def Start(self):
         self.board[0][0] = 1
@@ -13,17 +14,15 @@ class AttaxxBoard:
         self.board[0][-1] = 2
         self.board[-1][0] = 2
     
-    def testStart(self):
-        self.board[int(self.size/2)][int(self.size/2)] = 1
-        self.board[int(self.size/2)][int(self.size/2) + 2] = 2
-    
-    def ShowBoard(self):
+    def ShowBoard(self, filling = False):
+        if not(filling):
+            print(f"Player: {self.player}")
         for i in range(self.size):
             line = ""
             for j in range(self.size):
                 line += str(self.board[i][j]) + " "
-
             print(line)
+        print()
 
     def PossibleMoves(self):
         moves = []
@@ -43,10 +42,24 @@ class AttaxxBoard:
             return False
         if nextRow==row and nextCol==col:   # check if the play is staying on the same place
             return False
+        if abs(nextRow-row) > 2 or abs(nextCol-col) > 2:
+            return False
         if abs(nextRow-row) + abs(nextCol-col) == 3:    # check for the invalid moves on range 2
             return False
         return True
 
+    def HasMoves(self):
+        state = 0
+        store_player = self.player
+        self.player = 1
+        if (len(self.PossibleMoves()) > 0):
+            state += 1
+        self.NextPlayer()
+        if (len(self.PossibleMoves()) > 0):
+            state += 2
+        self.player = store_player
+        return state
+    
     def Move(self,moveList):
         x1,y1,x2,y2 = moveList
         if (abs(x2-x1)>1 or abs(y2-y1)>1):
@@ -63,38 +76,56 @@ class AttaxxBoard:
     
     def NextPlayer(self):
         self.player = 3-self.player
+
+    def Fill(self):
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.board[i][j] == 0:
+                    self.board[i][j] = 3- self.player
+                    self.ShowBoard(True)
+    
+    def PieceCount(self):
+        count1= 0
+        count2= 0
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.board[i][j] == 1:
+                    count1+=1
+                elif self.board[i][j] == 2:
+                    count2+=1
+        return count1,count2
     
     def CheckFinish(self):
-        winner = -1
-        if self.HasMoves() == 0:
-            self.GameOver()
-
-    def HasMoves(self):
-        state = 0
-        store_player = self.player
-        self.player = 1
-        if (len(self.PossibleMoves()) > 0):
-            state += 1
-        self.NextPlayer()
-        if (len(self.PossibleMoves()) > 0):
-            state += 2
-        self.player = store_player
-        return state
-
+        if (len(self.PossibleMoves())) == 0:
+            self.Fill()
+            c1,c2 = self.PieceCount()
+            if c1 > c2:
+                self.winner = 1
+            elif c1 < c2:
+                self.winner = 2
+            else:
+                self.winner = 3
     
 
 def GameLoop():
     size = int(input("Size: "))
     board = AttaxxBoard(size)
-    #board.Start()
-    board.testStart()
+    board.Start()
     board.ShowBoard()
+    while board.winner==0:
+        a,b,c,d = list(map(int, input("Move:").split(' ')))
+        move = [a,b,c,d]
+        if board.ValidMove(a,b,c,d):
+            board.Move(move)
+            board.NextPlayer()
+            board.ShowBoard()
+            board.CheckFinish()
+        else:
+            print("APRENDE A JOGAR BOZO!")
+    if board.winner == 3:
+        print("Empate")
+    else:
+        print(f"Player {board.winner} wins")
 
-    print()
-
-    moves = board.PossibleMoves()
-    move = [int(size/2),int(size/2), int(size/2), int(size/2) + 1]
-    board.Move(move)
-    board.ShowBoard()
     
 GameLoop()
