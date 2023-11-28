@@ -19,13 +19,15 @@ while True:
         board.PassTurn()
 
     else:
-        row, col = int(input_str[0]), int(input_str[1])
-
+        list_string = input_str.split(' ')
+        list_int = [int(x) for x in list_string[:2]]       
+        row, col = list_int[0], list_int[1]
+        
         if(board.is_valid_move(row, col)):
             board.PutPiece(row, col)
 
-            #continue ... 
+                #continue ... 
 
         else:
-            print("Invalid Move!")
-        
+            print("Invalid Move! PLease try again.")
+            
