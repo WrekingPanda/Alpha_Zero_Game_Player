@@ -147,8 +147,12 @@ def GameLoop():
         print("Empate")
     else:
         print(f"Player {board.winner} wins")
-    # graphics.game_over(board.winner,board.board)
-    # pygame.display.flip()
+    
+    #####################
+    # Test
+    graphics.game_over(board.winner,board.board)
+    graphics.show_pieces_amount()
+    pygame.display.flip()
     pygame.time.wait(5000)
     
 GameLoop()
