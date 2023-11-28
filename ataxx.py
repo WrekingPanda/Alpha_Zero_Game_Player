@@ -1,5 +1,8 @@
 import numpy as np
 import random
+import graphics
+import pygame
+from time import sleep
 
 class AttaxxBoard:
     def __init__(self, dim):
@@ -13,6 +16,10 @@ class AttaxxBoard:
         self.board[-1][-1] = 1
         self.board[0][-1] = 2
         self.board[-1][0] = 2
+        pygame.init()
+        graphics.SET_GLOBALS("a",self.board)
+        graphics.SET_SCREEN()
+
     
     def ShowBoard(self, filling = False):
         if not(filling):
@@ -38,6 +45,8 @@ class AttaxxBoard:
     def ValidMove(self, row, col, nextRow, nextCol):
         if nextRow<0 or nextRow>=self.size or nextCol<0 or nextCol>=self.size:    # check if the next position is within the board
             return False
+        if nextRow==row and nextCol==col:
+            return False
         if self.board[nextRow,nextCol] != 0:    # check if the next place if free to move too
             return False
         if nextRow==row and nextCol==col:   # check if the play is staying on the same place
@@ -47,18 +56,6 @@ class AttaxxBoard:
         if abs(nextRow-row) + abs(nextCol-col) == 3:    # check for the invalid moves on range 2
             return False
         return True
-
-    def HasMoves(self):
-        state = 0
-        store_player = self.player
-        self.player = 1
-        if (len(self.PossibleMoves()) > 0):
-            state += 1
-        self.NextPlayer()
-        if (len(self.PossibleMoves()) > 0):
-            state += 2
-        self.player = store_player
-        return state
     
     def Move(self,moveList):
         x1,y1,x2,y2 = moveList
@@ -78,11 +75,15 @@ class AttaxxBoard:
         self.player = 3-self.player
 
     def Fill(self):
+        graphics.unselect_piece()
         for i in range(self.size):
             for j in range(self.size):
                 if self.board[i][j] == 0:
                     self.board[i][j] = 3- self.player
                     self.ShowBoard(True)
+                    graphics.draw_board(self.board)
+                    pygame.display.flip()
+                    sleep(1/(2*self.size))
     
     def PieceCount(self):
         count1= 0
@@ -111,21 +112,43 @@ def GameLoop():
     size = int(input("Size: "))
     board = AttaxxBoard(size)
     board.Start()
+    graphics.draw_board(board.board)
+    pygame.display.flip()
     board.ShowBoard()
     while board.winner==0:
-        a,b,c,d = list(map(int, input("Move:").split(' ')))
-        move = [a,b,c,d]
-        if board.ValidMove(a,b,c,d):
-            board.Move(move)
-            board.NextPlayer()
-            board.ShowBoard()
-            board.CheckFinish()
-        else:
-            print("APRENDE A JOGAR BOZO!")
+        #a,b,c,d = list(map(int, input("Move:").split(' ')))
+        #move = [a,b,c,d]
+        graphics.show_piece_place()
+        selected=False
+        while(not selected):
+            y1,x1 = graphics.piece_index_click()
+            while board.board[y1][x1] != board.player:
+                print("Invalid Position")
+                y1,x1 = graphics.piece_index_click()
+            graphics.set_selected_piece(y1,x1)
+            graphics.draw_board(board.board)
+            pygame.display.flip()
+            y2,x2 = graphics.piece_index_click()
+            if not (board.ValidMove(y1,x1,y2,x2)):
+                print("Invalid Move")
+                graphics.unselect_piece()
+                graphics.draw_board(board.board)
+                pygame.display.flip()
+            else:
+                selected = True
+        board.Move([y1,x1,y2,x2])
+        board.NextPlayer()
+        graphics.unselect_piece()
+        board.ShowBoard()
+        graphics.draw_board(board.board)
+        pygame.display.flip()
+        board.CheckFinish()
     if board.winner == 3:
         print("Empate")
     else:
         print(f"Player {board.winner} wins")
-
+    # graphics.game_over(board.winner,board.board)
+    # pygame.display.flip()
+    pygame.time.wait(5000)
     
 GameLoop()

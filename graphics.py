@@ -154,7 +154,9 @@ def draw_attax_board():
         )
 
 
-def draw_board():
+def draw_board(new_board):
+    global GRID
+    GRID = new_board
     SCREEN.fill(BG_COLOR)
     if GAME_TITLE == "a" or GAME_TITLE == "attax": draw_attax_board()
     elif GAME_TITLE == "g" or GAME_TITLE == "go": draw_go_board()
@@ -172,7 +174,7 @@ def piece_index_click():
                 i = (y - SCREEN_PADDING) // CELL_LENGTH
                 # if index out of the grid index boundary, return (None, None)
                 if not all(map(lambda index: 0 <= index and index < GRID.shape[0], [i, j])):
-                    return None, None
+                    return -1, -1
                 return i, j
 
 
