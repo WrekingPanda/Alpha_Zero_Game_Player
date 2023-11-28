@@ -176,6 +176,10 @@ def piece_index_click():
                 if not all(map(lambda index: 0 <= index and index < GRID.shape[0], [i, j])):
                     return -1, -1
                 return i, j
+        draw_board(GRID)
+        show_piece_place()
+        pygame.display.flip()
+
 
 
 def show_selected_piece(i: int, j: int):

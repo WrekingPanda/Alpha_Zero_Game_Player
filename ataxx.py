@@ -118,7 +118,7 @@ def GameLoop():
     while board.winner==0:
         #a,b,c,d = list(map(int, input("Move:").split(' ')))
         #move = [a,b,c,d]
-        graphics.show_piece_place()
+        graphics.show_pieces_amount()
         selected=False
         while(not selected):
             y1,x1 = graphics.piece_index_click()
