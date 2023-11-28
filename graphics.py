@@ -14,7 +14,9 @@ GREY = (125, 125, 125)
 DARK_GREY = (50, 50, 50)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
+LIGHT_RED = (255, 125, 125)
 BLUE = (0, 0, 255)
+LIGHT_BLUE = (125, 125, 255)
 WOOD_BROWN = (156, 109, 51)
 
 GRID_LINES_WIDTH = 4
@@ -29,6 +31,9 @@ WINDOW_TITLE = None
 CELL_LENGTH = None
 PIECE_RADIUS = None
 PIECE_COLOR = None
+SELECTED_PIECE_COLOR = None
+
+SELECTED_COORDS = (None, None)
 
 
 def is_in_grid(i: int, j: int):
@@ -36,7 +41,7 @@ def is_in_grid(i: int, j: int):
 
 
 def SET_GLOBALS(game_title: Literal['attax', 'a', 'go', 'g'], grid: np.ndarray):
-    global GAME_TITLE, GRID, BG_COLOR, WINDOW_TITLE, CELL_LENGTH, PIECE_RADIUS, PIECE_COLOR
+    global GAME_TITLE, GRID, BG_COLOR, WINDOW_TITLE, CELL_LENGTH, PIECE_RADIUS, PIECE_COLOR, SELECTED_PIECE_COLOR
     GAME_TITLE = game_title
     GRID = grid
     BG_COLOR = LIGHT_GREY if game_title == "a" or game_title == "attax" else WOOD_BROWN
@@ -44,6 +49,7 @@ def SET_GLOBALS(game_title: Literal['attax', 'a', 'go', 'g'], grid: np.ndarray):
     CELL_LENGTH = (min(SCREEN_HEIGHT, SCREEN_WIDTH) - 2*SCREEN_PADDING) // max(grid.shape[0], grid.shape[1])
     PIECE_RADIUS = CELL_LENGTH//2 - CELL_LENGTH//8
     PIECE_COLOR = {1: RED, 2: BLUE} if GAME_TITLE == "attax" or GAME_TITLE == "a" else {1: WHITE, 2: BLACK}
+    SELECTED_PIECE_COLOR = {1: LIGHT_RED, 2: LIGHT_BLUE} if GAME_TITLE == "attax" or GAME_TITLE == "a" else {1: LIGHT_GREY, 2: DARK_GREY}
 
 
 # sets the game window
@@ -54,12 +60,21 @@ def SET_SCREEN():
     SCREEN.fill(BG_COLOR)
 
 
+def set_selected_piece(i: int, j: int):
+    global SELECTED_COORDS
+    SELECTED_COORDS = (i,j)
+
+def unselect_piece():
+    global SELECTED_COORDS
+    SELECTED_COORDS = (None, None)
+
+
 def draw_piece(i: int, j: int):
     if  (0 <= i and i < GRID.shape[0]) and (0 <= j and j < GRID.shape[1]):
         piece_center_x = SCREEN_PADDING + j*CELL_LENGTH + CELL_LENGTH//2
         piece_center_y = SCREEN_PADDING + i*CELL_LENGTH + CELL_LENGTH//2
         pygame.draw.circle(
-            surface=SCREEN, color=PIECE_COLOR[GRID[i][j]],
+            surface=SCREEN, color=PIECE_COLOR[GRID[i][j]] if SELECTED_COORDS != (i,j) else SELECTED_PIECE_COLOR[GRID[i][j]],
             center=(piece_center_x, piece_center_y), radius=PIECE_RADIUS
         )
         pygame.draw.circle(
@@ -147,63 +162,31 @@ def draw_board():
 
 
 def piece_index_click():
-    x, y = pygame.mouse.get_pos()
-    j = (x - SCREEN_PADDING) // CELL_LENGTH
-    i = (y - SCREEN_PADDING) // CELL_LENGTH
-    # if index out of the grid index boundary, return (None, None)
-    if not all(map(lambda index: 0 <= index and index < GRID.shape[0], [i, j])):
-        return None, None
-    return i, j
-
-'''
-def show_selected_piece(i: int, j: int):
-    piece_center_x = SCREEN_PADDING + j*cell_length + cell_length//2
-    piece_center_y = SCREEN_PADDING + i*cell_length + cell_length//2
-    piece_color = (RED, BLUE) if GAME_TITLE == "attax" or GAME_TITLE == "a" else (WHITE, BLACK)
-    pygame.draw.circle(
-        surface=screen, color=piece_color[0] if grid[i][j] == 1 else piece_color[1],
-        center=(piece_center_x, piece_center_y),
-        radius=piece_radius,
-    )
-    pygame.draw.circle(
-        surface=screen, color=BLACK,
-        center=(piece_center_x, piece_center_y),
-        radius=piece_radius, width=GRID_LINES_WIDTH
-    )
-'''
-
-def show_graphics(game_title: Literal['attax', 'a', 'go', 'g'], grid: np.ndarray):
-    pygame.init()
-    SET_GLOBALS(game_title, grid)
-    SET_SCREEN()
-    
-    # main loop
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                i, j = piece_index_click()
-                print(f"i={i} j={j}")
+                x, y = pygame.mouse.get_pos()
+                j = (x - SCREEN_PADDING) // CELL_LENGTH
+                i = (y - SCREEN_PADDING) // CELL_LENGTH
+                # if index out of the grid index boundary, return (None, None)
+                if not all(map(lambda index: 0 <= index and index < GRID.shape[0], [i, j])):
+                    return None, None
+                return i, j
 
-        draw_board()
-        show_piece_place()
 
-        pygame.display.flip()
-        
-
-if __name__ == "__main__":
-    grid = np.array([
-        [0, 1, 0, 1, 0, 1, 0, 0, 2],
-        [0, 0, 1, 2, 0, 1, 0, 0, 0],
-        [0, 0, 0, 2, 0, 0, 2, 1, 1],
-        [0, 2, 2, 0, 0, 0, 1, 1, 1],
-        [1, 0, 2, 1, 0, 0, 0, 1, 1],
-        [0, 1, 0, 1, 2, 1, 0, 0, 1],
-        [0, 1, 0, 1, 1, 0, 0, 0, 0],
-        [1, 0, 0, 0, 2, 1, 1, 0, 1],
-        [0, 0, 0, 2, 0, 0, 0, 0, 2]
-    ])
-    show_graphics("g", grid)
-
+def show_selected_piece(i: int, j: int):
+    piece_center_x = SCREEN_PADDING + j*CELL_LENGTH + CELL_LENGTH//2
+    piece_center_y = SCREEN_PADDING + i*CELL_LENGTH + CELL_LENGTH//2
+    pygame.draw.circle(
+        surface=SCREEN, color=(*PIECE_COLOR[GRID[i][j]], 125),
+        center=(piece_center_x, piece_center_y),
+        radius=PIECE_RADIUS,
+    )
+    pygame.draw.circle(
+        surface=SCREEN, color=BLACK,
+        center=(piece_center_x, piece_center_y),
+        radius=PIECE_RADIUS,
+    )
 
