@@ -116,13 +116,16 @@ class board_go:
     #########################################################################################
 
     # Counting Liberties
-    def count_liberties(self, row, col, visited=None):
+    def count_liberties(self, row, col, visited=None, player = 1):
+
         if visited is None:
             visited = set()
+            player = self.board[row][col]
 
         # Check if the current position is out of bounds or already visited
         if not (0 <= row < self.size and 0 <= col < self.size) or (row, col) in visited:
             return 0
+        
 
         visited.add((row, col))
 
@@ -130,13 +133,16 @@ class board_go:
         if self.board[row][col] == 0:
             return 1
 
+        # Check if the current position has a piece of the opponent player, in wich case it stops counting
+        if self.board[row][col] != player:
+            return 0
+
         # Check the neighboring positions recursively
         liberties = 0
         for dr, dc in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
             new_row = row + dr
             new_col = col + dc
-            liberties += self.count_liberties(new_row, new_col, visited)
-
+            liberties += self.count_liberties(new_row, new_col, visited,player)
         return liberties
 
     def count_group_liberties(self, row, col):
@@ -145,7 +151,7 @@ class board_go:
             return 0  # Empty intersection has no liberties
 
         visited = set()
-        return self.count_liberties(row, col, visited)
+        return self.count_liberties(row, col)
     
 
     #########################################################################################
