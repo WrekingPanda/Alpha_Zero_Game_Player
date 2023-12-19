@@ -119,14 +119,16 @@ class Board_go:
         for i in range(self.size):
             for j in range(self.size):
                 if self.board[i][j] is None:
-                    colors[i][j] = None
+                    colors[i][j] = 0
+                elif self.board[i][j].color:
+                    colors[i][j] = 1
                 else:
-                    colors[i][j] = self.board[i][j].color
+                    colors[i][j] = 2
 
         return colors
     
 
-    # Add a group of sttones to the game
+    # Add a group of stones to the game
     def _add(self, group):
         for (x, y) in group.stones:
             self.board[x][y] = group
@@ -147,6 +149,22 @@ class Board_go:
     # Counts number of liberties from a group
     def _liberties(self, group):
         return sum(1 for u, v in group.border if self.board[v][u] is None)
+
+    def update_liberties(self, added_stone=None):
+    
+        '''
+        Updates the liberties of the entire board, group by group.
+        Usually a stone is added each turn. To allow killing by 'suicide',
+        all the 'old' groups should be updated before the newly added one.
+        '''
+        
+        for group in self.groups:
+            if added_stone:
+                if group == added_stone.group:
+                    continue
+            group.update_liberties()
+        if added_stone:
+            added_stone.group.update_liberties()
 
 
     # Sum up the scores = empty fields + captured stones per player

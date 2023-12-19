@@ -46,9 +46,13 @@ while(not board.game_over):
             board.place_stone(row, col)
             board._compute_score()
 
-    print(board.get_data())
-
-        
+    #print(board.get_data())
+    print("Score: ")
+    print(board._compute_score())
+    print("Stones: ")
+    print(board._stones())
+    print("Liberties: ")
+    #print(board._liberties(1))        
         
 
 
