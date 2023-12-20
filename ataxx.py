@@ -7,18 +7,19 @@ from time import sleep
 class AttaxxBoard:
     def __init__(self, dim):
         self.size = dim
-        self.board = np.zeros((self.size,self.size),dtype=int)
+        self.board = np.zeros(shape=(self.size,self.size), dtype=int)
         self.player = 1
         self.winner = 0
         
-    def Start(self):
+    def Start(self, render=True):
         self.board[0][0] = 1
         self.board[-1][-1] = 1
         self.board[0][-1] = 2
         self.board[-1][0] = 2
-        pygame.init()
-        graphics.SET_GLOBALS("a",self.board)
-        graphics.SET_SCREEN()
+        if render:
+            pygame.init()
+            graphics.SET_GLOBALS("a",self.board)
+            graphics.SET_SCREEN()
 
     
     def ShowBoard(self, filling = False):
@@ -107,6 +108,9 @@ class AttaxxBoard:
             else:
                 self.winner = 3
     
+    def hasFinished(self):
+        return self.winner != 0
+    
 
 def GameLoop():
     size = int(input("Size: "))
@@ -154,5 +158,6 @@ def GameLoop():
     graphics.show_pieces_amount()
     pygame.display.flip()
     pygame.time.wait(5000)
-    
-GameLoop()
+
+if __name__ == "__main__":
+    GameLoop()

@@ -161,6 +161,7 @@ def draw_board(new_board):
     if GAME_TITLE == "a" or GAME_TITLE == "attax": draw_attax_board()
     elif GAME_TITLE == "g" or GAME_TITLE == "go": draw_go_board()
     if GAME_TITLE in ['attax', 'a', 'go', 'g']: draw_pieces()
+    SCREEN.blit()
 
 
 def piece_index_click():
