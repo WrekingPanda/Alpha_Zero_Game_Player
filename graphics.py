@@ -48,8 +48,8 @@ def SET_GLOBALS(game_title: Literal['attax', 'a', 'go', 'g'], grid: np.ndarray):
     WINDOW_TITLE =  "Attax" if game_title == "a" or game_title == "attax" else "Go"
     CELL_LENGTH = (min(SCREEN_HEIGHT, SCREEN_WIDTH) - 2*SCREEN_PADDING) // max(grid.shape[0], grid.shape[1])
     PIECE_RADIUS = CELL_LENGTH//2 - CELL_LENGTH//8
-    PIECE_COLOR = {1: RED, 2: BLUE} if GAME_TITLE == "attax" or GAME_TITLE == "a" else {1: WHITE, 2: BLACK}
-    SELECTED_PIECE_COLOR = {1: LIGHT_RED, 2: LIGHT_BLUE} if GAME_TITLE == "attax" or GAME_TITLE == "a" else {1: LIGHT_GREY, 2: DARK_GREY}
+    PIECE_COLOR = {1: RED, 2: BLUE} if GAME_TITLE == "attax" or GAME_TITLE == "a" else {1: BLACK, 2: WHITE}
+    SELECTED_PIECE_COLOR = {1: LIGHT_RED, 2: LIGHT_BLUE} if GAME_TITLE == "attax" or GAME_TITLE == "a" else {1: DARK_GREY, 2: LIGHT_GREY}
 
 
 # sets the game window

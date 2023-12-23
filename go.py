@@ -1,161 +1,210 @@
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
+import numpy as np
+from copy import deepcopy
+from pprint import pprint
 
+class Group:
+    def __init__(self, stone_coords, go_board):
+        self.go_board = go_board
+        self.stones = set([stone_coords])
+        self.possible_prisioner = False
 
-class Stone(object):
-    def __init__(self, board, point, color):
-        """Create and initialize a stone.
-
-        Arguments:
-        board -- the board which the stone resides on
-        point -- location of the stone as a tuple, e.g. (3, 3)
-                 represents the upper left hoshi
-        color -- color of the stone
-
-        """
-        self.board = board
-        self.point = point
-        self.color = color
-        self.group = self.find_group()
-
-    def remove(self):
-        """Remove the stone from board."""
-        self.group.stones.remove(self)
-        del self
-
-    @property
-    def neighbors(self):
-        """Return a list of neighboring points."""
-        neighboring = [(self.point[0] - 1, self.point[1]),
-                       (self.point[0] + 1, self.point[1]),
-                       (self.point[0], self.point[1] - 1),
-                       (self.point[0], self.point[1] + 1)]
-        for point in neighboring:
-            if not 0 < point[0] < 20 or not 0 < point[1] < 20:
-                neighboring.remove(point)
-        return neighboring
-
-    @property
-    def liberties(self):
-        """Find and return the liberties of the stone."""
-        liberties = self.neighbors
-        stones = self.board.search(points=self.neighbors)
-        for stone in stones:
-            liberties.remove(stone.point)
-        return liberties
-
-    def find_group(self):
-        """Find or create a group for the stone."""
-        groups = []
-        stones = self.board.search(points=self.neighbors)
-        for stone in stones:
-            if stone.color == self.color and stone.group not in groups:
-                groups.append(stone.group)
-        if not groups:
-            group = Group(self.board, self)
-            return group
-        else:
-            if len(groups) > 1:
-                for group in groups[1:]:
-                    groups[0].merge(group)
-            groups[0].stones.append(self)
-            return groups[0]
-
-    def __str__(self):
-        """Return the location of the stone, e.g. 'D17'."""
-        return 'ABCDEFGHJKLMNOPQRST'[self.point[0]-1] + str(20-(self.point[1]))
-
-
-class Group(object):
-    def __init__(self, board, stone):
-        """Create and initialize a new group.
-
-        Arguments:
-        board -- the board which this group resides in
-        stone -- the initial stone in the group
-
-        """
-        self.board = board
-        self.board.groups.append(self)
-        self.stones = [stone]
-        self.liberties = None
-
-    def merge(self, group):
-        """Merge two groups.
-
-        This method merges the argument group with this one by adding
-        all its stones into this one. After that it removes the group
-        from the board.
-
-        Arguments:
-        group -- the group to be merged with this one
-
-        """
-        for stone in group.stones:
-            stone.group = self
-            self.stones.append(stone)
-        self.board.groups.remove(group)
-        del group
-
-    def remove(self):
-        """Remove the entire group."""
-        while self.stones:
-            self.stones[0].remove()
-        self.board.groups.remove(self)
-        del self
-
-    def update_liberties(self):
-        """Update the group's liberties.
-
-        As this method will remove the entire group if no liberties can
-        be found, it should only be called once per turn.
-
-        """
-        liberties = []
+        neighbor_groups = set()
+        i,j = stone_coords
+        for (di, dj) in [(-1,0),(1,0),(0,-1),(0,1)]:
+            if go_board.is_in(i+di, j+dj) and go_board.board[i+di, j+dj] == go_board.player:
+                neighbor_groups.add(go_board.group_of_stone[(i+di, j+dj)])
+        # updates the groups
+        for neighbor_group in neighbor_groups:
+            self.stones = self.stones.union(neighbor_group.stones)
+            go_board.players_groups[go_board.player].remove(neighbor_group)
         for stone in self.stones:
-            for liberty in stone.liberties:
-                liberties.append(liberty)
-        self.liberties = set(liberties)
-        if len(self.liberties) == 0:
-            self.remove()
+            go_board.group_of_stone[stone] = self
+        self.go_board.board[stone_coords] = self.go_board.player
+
+        self.liberty_points = self.get_liberty_points()
+        self.liberties = len(self.liberty_points)
+
+    def get_liberty_points(self):
+        liberty_pts = set()
+        for (stone_i, stone_j) in self.stones:
+            for (di, dj) in [(-1,0),(1,0),(0,-1),(0,1)]:
+                if (self.go_board.is_in(stone_i+di, stone_j+dj)) and (self.go_board.board[stone_i+di, stone_j+dj] == 0):
+                    liberty_pts.add((stone_i+di, stone_j+dj))
+        return liberty_pts
+    
+    def count_liberties(self):
+        return len(list(self.liberty_points))
+    
+    def __eq__(self, other):
+        return self.stones.__eq__(other.stones)
+
+    def __hash__(self):
+        return object.__hash__(self)
+
+
+
+class GoBoard:
+    def __init__(self, dim):
+        self.size = dim
+        self.board = np.zeros(shape=(dim,dim), dtype=np.uint8)
+        self.player = 1
+        self.players_groups = {1:[], 2:[]} # each dict holds key-value pairs of structure g:set( (i,j) ) | i,j integers, g Group
+        self.group_of_stone = {(i,j): None for j in range(dim) for i in range(dim)}
+        self.players_prev_boards = {1:None, 2:None}
+        self.players_captured_opp_stones = {1:0, 2:0}
 
     def __str__(self):
-        """Return a list of the group's stones as a string."""
-        return str([str(stone) for stone in self.stones])
+        out = ""
+        for _ in range(2*self.size+1): out += "-"
+        out += "\n"
+        for i in range(self.size):
+            for j in range(-1, self.size+1):
+                if j == -1 or j == self.size: out += "|"
+                elif j == 0: out += str(self.board[i,j])
+                else: out += " " + str(self.board[i,j])
+            out += "\n"
+        for _ in range(2*self.size+1): out += "-"
+        return out
+    
+    def is_in(self, i, j):
+        return 0 <= i < self.size and 0 <= j < self.size
+    
+    def switch_player(self):
+        self.player = 3 - self.player
 
+    def is_valid_move(self, coords):
+        # pass play
+        if coords == (-1,-1):
+            return True
+        i,j = coords
+        if self.is_in(i,j):
+            if self.board[coords] != 0:
+                return False
+            copy = deepcopy(self)
+            Group(coords, copy)
+            copy.players_groups[copy.player].append(copy.group_of_stone[coords])
+            copy.update_player_groups()
+            if copy.group_of_stone[coords].count_liberties() != 0:
+                # repetition of board
+                return (
+                    (self.players_prev_boards[self.player] == None) or 
+                    (self.players_prev_boards[self.player] != None and self.players_prev_boards[self.player] != str(copy.board))
+                )
+            # new group has zero liberties
+            return False
+        # out of bounds
+        return False
+                
+    def update_player_groups(self):
+        opponent_groups = self.players_groups[3-self.player]
+        for group in opponent_groups:
+            group.liberty_points = group.get_liberty_points()
+            group.liberties = group.count_liberties()
+            if group.liberties == 0:
+                self.players_captured_opp_stones[self.player] += len(group.stones)
+                for stone in group.stones:
+                    self.board[stone] = 0
+                    self.group_of_stone[stone] = None
+                opponent_groups.remove(group)
+        for group in self.players_groups[self.player]:
+            group.liberty_points = group.get_liberty_points()
+            group.liberties = group.count_liberties()
 
-class Board(object):
-    def __init__(self):
-        """Create and initialize an empty board."""
-        self.groups = []
-        self.next = BLACK
-
-    def search(self, point=None, points=[]):
-        """Search the board for a stone.
-
-        The board is searched in a linear fashion, looking for either a
-        stone in a single point (which the method will immediately
-        return if found) or all stones within a group of points.
-
-        Arguments:
-        point -- a single point (tuple) to look for
-        points -- a list of points to be searched
-
-        """
-        stones = []
-        for group in self.groups:
-            for stone in group.stones:
-                if stone.point == point and not points:
-                    return stone
-                if stone.point in points:
-                    stones.append(stone)
-        return stones
-
-    def turn(self):
-        """Keep track of the turn by flipping between BLACK and WHITE."""
-        if self.next == BLACK:
-            self.next = WHITE
-            return BLACK
+    def play_move(self, coords):
+        if self.is_valid_move(coords):
+            if coords != (-1,-1):
+                Group(coords, self)
+                self.players_groups[self.player].append(self.group_of_stone[coords])
+                self.update_player_groups()
+                self.players_prev_boards[self.player] = str(self.board)
+            self.switch_player()
         else:
-            self.next = BLACK
-            return WHITE
+            print("NOT A VALID MOVE")
+
+    def calculate_scores(self):
+        self_copy = deepcopy(self)
+        board = deepcopy(self_copy.board) # copy the board
+
+        def flood_fill(coords, player):
+            if board[coords] == 0 or (board[coords] != 1 and board[coords] != 2): board[coords] += 10+player
+            i,j = coords
+            for (di, dj) in [(-1,0),(1,0),(0,-1),(0,1)]:
+                if self_copy.is_in(i+di, j+dj) and board[i+di, j+dj] != 1 and board[i+di, j+dj] != 2 and board[i+di, j+dj] != 10+player and board[i+di, j+dj] < 15:
+                    flood_fill((i+di, j+dj), player)
+            return board
+        
+        # check for possible prisioners prisioners
+        for player in [self_copy.player, 3-self_copy.player]:
+            for opp_group in self_copy.players_groups[3-player]:
+                board = deepcopy(self_copy.board) # copy the board
+                for stone in opp_group.stones:
+                    board = flood_fill(stone, 3-player)
+                for group in self_copy.players_groups[player]:
+                    # check if the player group liberties are inside the opponent territory
+                    if all(map(lambda lib_pt: (board[lib_pt]==10+(3-player) or board[lib_pt]==(3-player)), group.liberty_points)):
+                        group.possible_prisioner = True
+        
+        # remove prisioners
+        board = deepcopy(self_copy.board) # copy the board
+        for player in [self_copy.player, 3-self_copy.player]:
+            for opp_group in self_copy.players_groups[3-player]:
+                if opp_group.possible_prisioner:
+                    continue
+                for stone in opp_group.stones:
+                    board = flood_fill(stone, 3-player)
+            for group in deepcopy(self_copy.players_groups[player]):
+                # check if the player group liberties are inside the opponent territory
+                if group.possible_prisioner:
+                    for stone in group.stones:
+                        self_copy.board[stone] = 0
+                        self_copy.group_of_stone[stone] = None
+                    self_copy.players_groups[player].remove(group)
+
+        # calculate territories
+        board = deepcopy(self_copy.board) # copy the board
+        for player in [3-self_copy.player, self_copy.player]:
+            for group in self_copy.players_groups[player]:
+                for stone in group.stones:
+                    board = flood_fill(stone, player)
+
+        # scores
+        scores = {1:0, 2:0}
+        # count territoy
+        for i in range(len(board)):
+            for j in range(len(board[0])):
+                if board[i,j] == 11: scores[1] += 1
+                if board[i,j] == 12: scores[2] += 1
+        # removing the amount of stones captured by the opponent
+        scores[1] -= self_copy.players_captured_opp_stones[2]
+        scores[2] -= self_copy.players_captured_opp_stones[1]
+        # komi
+        scores[2] += 5.5
+        return scores
+
+
+###############################################
+####              TEST GAME                ####
+###############################################
+
+import pygame
+import graphics
+
+if __name__ == "__main__":
+    b = GoBoard(9)
+    pygame.init()
+    graphics.SET_GLOBALS("g", b.board)
+    graphics.SET_SCREEN()
+    graphics.draw_board(b.board)
+    count_pass = 0
+    while True:
+        i,j = graphics.piece_index_click()
+        if (i,j) == (-1,-1):
+            count_pass += 1
+            if count_pass == 2:
+                break
+        else:
+            count_pass = 0
+        b.play_move((i,j))
+        graphics.draw_board(b.board)
+    print(b.calculate_scores())
+
