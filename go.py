@@ -52,6 +52,8 @@ class GoBoard:
         self.group_of_stone = {(i,j): None for j in range(dim) for i in range(dim)}
         self.players_prev_boards = {1:None, 2:None}
         self.players_captured_opp_stones = {1:0, 2:0}
+        self.players_last_move = {1:(-2,-2), 2:(-2,-2)}
+        self.winner = 0
 
     def __str__(self):
         out = ""
@@ -66,17 +68,23 @@ class GoBoard:
         for _ in range(2*self.size+1): out += "-"
         return out
     
+    def Start(self, render=True):
+        if render:
+            pygame.init()
+            graphics.SET_GLOBALS("g",self.board)
+            graphics.SET_SCREEN()
+    
     def is_in(self, i, j):
         return 0 <= i < self.size and 0 <= j < self.size
     
-    def switch_player(self):
+    def NextPlayer(self):
         self.player = 3 - self.player
 
-    def is_valid_move(self, coords):
+    def ValidMove(self, i, j):
+        coords = (i,j)
         # pass play
         if coords == (-1,-1):
             return True
-        i,j = coords
         if self.is_in(i,j):
             if self.board[coords] != 0:
                 return False
@@ -110,16 +118,22 @@ class GoBoard:
             group.liberty_points = group.get_liberty_points()
             group.liberties = group.count_liberties()
 
-    def play_move(self, coords):
-        if self.is_valid_move(coords):
+    def Move(self, coords):
+        if self.ValidMove(*coords):
+            self.players_last_move[self.player] = coords
             if coords != (-1,-1):
                 Group(coords, self)
                 self.players_groups[self.player].append(self.group_of_stone[coords])
                 self.update_player_groups()
                 self.players_prev_boards[self.player] = str(self.board)
-            self.switch_player()
+            elif self.hasFinished():
+                scores = self.calculate_scores()
+                self.winner = 1 if scores[1] > scores[2] else 2
         else:
             print("NOT A VALID MOVE")
+
+    def hasFinished(self):
+        return self.players_last_move[1] == (-1,-1) and self.players_last_move[2] == (-1,-1)
 
     def calculate_scores(self):
         self_copy = deepcopy(self)
@@ -204,7 +218,8 @@ if __name__ == "__main__":
                 break
         else:
             count_pass = 0
-        b.play_move((i,j))
+        b.Move((i,j))
+        b.NextPlayer()
         graphics.draw_board(b.board)
     print(b.calculate_scores())
 

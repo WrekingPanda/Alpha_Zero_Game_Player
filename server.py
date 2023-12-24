@@ -2,16 +2,22 @@ import socket
 import time
 import graphics
 from ataxx import AttaxxBoard
+from go import GoBoard
 import pygame
 
-Game="A4x4" # "A6x6" "G7x7" "G9x9" "A5x5"
+Game="G9x9" # "A4x4" "A6x6" "G7x7" "G9x9" "A5x5"
 
 def parse_coords(data):
     data = data.split(sep=" ")
     coords_list = [] # go: [i, j] | attax: [i1, j1, i2, j2]
     for coord in data[1:]:
-        coords_list.append(int(coord[0]))
-        coords_list.append(int(coord[-1]))
+        if "-" in coord:
+            coords_list.append(-1)
+            coords_list.append(-1)
+        else:
+            coords_list.append(int(coord[0]))
+            coords_list.append(int(coord[-1]))
+    coords_list = tuple(coords_list)
     return coords_list
 
 def start_server(host='localhost', port=12345, render=False):
@@ -32,53 +38,60 @@ def start_server(host='localhost', port=12345, render=False):
 
     agents = [agent1, agent2]
     current_agent = 0
+
+    game_type = Game[0]
+    game_size = int(Game[-1])
     
-    board = AttaxxBoard(4)
+    board = AttaxxBoard(game_size) if game_type == "A" else GoBoard(game_size)
     board.Start()
     play_attempts = 0
-    time_to_play = time.time()
 
     if render:
         graphics.draw_board(board.board)
-    while not board.hasFinished():
-        print(board.board)
-        # check if time limit to play has passed
-        if time.time() - time_to_play >= 60: # more than 60 seconds to play
-            agents[current_agent].sendall(b'TIME LIMIT PASSED')
-            board.NextPlayer()
-            current_agent = 1-current_agent
-            time_to_play = time.time()
-    
+
+    while not board.hasFinished():    
         try:
             data = agents[current_agent].recv(1024).decode()
             if not data:
                 break
 
-            # Process the move (example, attax: "MOVE I1,J1 I2,J2")
-            print(current_agent, " -> ",data)
-            i1, j1, i2, j2 = parse_coords(data)
+            # Process the move (example, attax: "MOVE i1,j1 i2,j2", go: "MOVE i, j")
+            print(current_agent, " -> ", data)
+            
+            # check if received move indicates that the player ran out of time
+            if data[-1] == "X":
+                print(f"Skipping Agent {current_agent} play because the time limit was reached")
+                board.NextPlayer()
+                # switch agents
+                current_agent = 1-current_agent
+                continue
 
-            if board.ValidMove(i1, j1, i2, j2):
+            coords = parse_coords(data)
+            print(coords)
+            if board.ValidMove(*coords):
+                play_attempts = 0
                 agents[current_agent].sendall(b'VALID')
                 agents[1-current_agent].sendall(data.encode())
                 # show selectect piece
-                if render:
-                    graphics.set_selected_piece(i1,j1)
+                if render and game_type == "A":
+                    graphics.set_selected_piece(coords[0], coords[1])
                     graphics.draw_board(board.board)
                     pygame.display.flip()
                     time.sleep(1)
                 # process game
-                board.Move([i1,j1,i2,j2])
+                board.Move(coords)
                 board.NextPlayer()
                 # show play
                 if render:
                     graphics.unselect_piece()
-                    board.ShowBoard()
                     graphics.draw_board(board.board)
                     pygame.display.flip()
-                # check for end of the game and switch turns
-                board.CheckFinish()
+                # check for end of the game in an Attaxx game
+                if game_type == "A":
+                    board.CheckFinish()
+                # switch agents
                 current_agent = 1-current_agent
+
             # invalid move
             else:
                 agents[current_agent].sendall(b'INVALID')
@@ -87,24 +100,22 @@ def start_server(host='localhost', port=12345, render=False):
                     board.NextPlayer()
                     current_agent = 1-current_agent
             
+            # might want to remove
             time.sleep(1)
 
         except Exception as e:
             print("Error:", e)
             break
-    
-    print(board.board)
-
 
     print("\n-----------------\nGAME END\n-----------------\n")
-    time.sleep(1)
+    winner_text = f"The winner is Agent {board.winner}!" if board.winner != 3 else "The game ended in a draw!"
+    agents[current_agent].sendall(winner_text.encode())
+    agents[1-current_agent].sendall(winner_text.encode())
+    time.sleep(0.5)
     agent1.close()
     agent2.close()
     server_socket.close()
 
-def is_valid_move(move):
-    # Implement the logic to check if the move is valid
-    return True
 
 if __name__ == "__main__":
     start_server(render=True)

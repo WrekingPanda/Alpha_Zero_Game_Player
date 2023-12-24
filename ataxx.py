@@ -44,6 +44,8 @@ class AttaxxBoard:
         return moves
     
     def ValidMove(self, row, col, nextRow, nextCol):
+        if (self.board[row, col] != self.player):
+            return False
         if nextRow<0 or nextRow>=self.size or nextCol<0 or nextCol>=self.size:    # check if the next position is within the board
             return False
         if nextRow==row and nextCol==col:
