@@ -40,8 +40,13 @@ class AttaxxBoard:
                     for nextRow in range(row-2,row+3):
                         for nextCol in range(col-2,col+3):
                             if self.ValidMove(row,col,nextRow,nextCol):
-                                moves.append([row,col,nextRow,nextCol])
+                                moves.append((row,col,nextRow,nextCol))
         return moves
+    
+    def MoveToAction(self, move):
+        i1, j1, i2, j2 = move
+        size = self.board.size
+        return j1 + i1*size + j2*size**2 + i2*size**3
     
     def ValidMove(self, row, col, nextRow, nextCol):
         if (self.board[row, col] != self.player):

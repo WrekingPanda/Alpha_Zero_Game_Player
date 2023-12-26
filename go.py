@@ -46,7 +46,7 @@ class Group:
 class GoBoard:
     def __init__(self, dim):
         self.size = dim
-        self.board = np.zeros(shape=(dim,dim), dtype=np.uint8)
+        self.board = np.zeros(shape=(dim,dim), dtype=np.float32)
         self.player = 1
         self.players_groups = {1:[], 2:[]} # each dict holds key-value pairs of structure g:set( (i,j) ) | i,j integers, g Group
         self.group_of_stone = {(i,j): None for j in range(dim) for i in range(dim)}
@@ -54,6 +54,9 @@ class GoBoard:
         self.players_captured_opp_stones = {1:0, 2:0}
         self.players_last_move = {1:(-2,-2), 2:(-2,-2)}
         self.winner = 0
+
+    def __eq__(self, other):
+        return self.board.tolist() == other.board.tolist()
 
     def __str__(self):
         out = ""
@@ -133,7 +136,22 @@ class GoBoard:
             print("NOT A VALID MOVE")
 
     def hasFinished(self):
-        return self.players_last_move[1] == (-1,-1) and self.players_last_move[2] == (-1,-1)
+        return (self.players_last_move[1] == (-1,-1) and self.players_last_move[2] == (-1,-1)) or self.winner != 0
+    
+    def PossibleMoves(self):
+        moves = []
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.board[i,j] == 0:
+                    moves.append((i,j))
+        moves.append((-1,-1))
+        return moves
+    
+    def MoveToAction(self, move):
+        if move == (-1,-1):
+            return self.board.size**2
+        i, j = move
+        return j + i*self.board.size
 
     def calculate_scores(self):
         self_copy = deepcopy(self)
