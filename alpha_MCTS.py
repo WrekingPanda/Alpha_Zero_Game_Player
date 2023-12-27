@@ -65,12 +65,13 @@ class MCTS:
         self.board: AttaxxBoard | GoBoard = board
         self.n_iterations = n_iterations
         self.model = model
+        self.root = MCTS_Node(self.board)
 
     def Search(self):
-        root = MCTS_Node(self.board)
+        self.root = MCTS_Node(self.board)
 
         for _ in range(self.n_iterations):
-            node = root
+            node = self.root
             while len(node.children) > 0:
                 node = node.Select()
 
@@ -83,7 +84,7 @@ class MCTS:
         if type(self.board) == GoBoard:
             action_space_size += 1
         action_probs = numpy.zeros(shape=action_space_size)
-        for action, child in root.children.items():
+        for action, child in self.root.children.items():
             action_probs[action] = child.n
         action_probs /= numpy.sum(action_probs)
         return action_probs
