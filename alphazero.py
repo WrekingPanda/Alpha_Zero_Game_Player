@@ -1,13 +1,29 @@
-import torch
 import numpy as np
 from alpha_MCTS import MCTS
 from ataxx import AttaxxBoard
 from go import GoBoard
 
 import random
+from tqdm import tqdm
 
+import torch
 import torch.nn.functional as F
 torch.manual_seed(0)
+
+import warnings
+warnings.filterwarnings("ignore")
+
+# for the data augmentation process
+def transformations(board_state, action_probs, outcome):
+    transf = []
+    transf.append((board_state.flip_vertical().EncodedGameState(), action_probs, outcome))             # flip vertically
+    transf.append((board_state.rotate90(1).EncodedGameState(), action_probs, outcome))                 # rotate 90
+    transf.append((board_state.rotate90(1).flip_vertical().EncodedGameState(), action_probs, outcome)) # rotate 90 and flip vertically
+    transf.append((board_state.rotate90(2).EncodedGameState(), action_probs, outcome))                 # rotate 180
+    transf.append((board_state.rotate90(2).flip_vertical().EncodedGameState(), action_probs, outcome)) # rotate 180 and flip vertically
+    transf.append((board_state.rotate90(3).EncodedGameState(), action_probs, outcome))                 # rotate 270
+    transf.append((board_state.rotate90(3).flip_vertical().EncodedGameState(), action_probs, outcome)) # rotate 270 and flip vertically
+    return transf
 
 class AlphaZero:
     # params = {n_iterations=10, self_play_iterations=10, mcts_iterations=100, n_epochs=10}
@@ -32,9 +48,9 @@ class AlphaZero:
             action = np.random.choice(action_list, p=action_probs)
             move = self.mcts.root.children[action].originMove
             board.Move(move)
-            print(board.hasFinished())
-            print(board.winner)
-            print(board.board)
+            # print(board.hasFinished())
+            # print(board.winner)
+            # print(board.board)
 
             board.NextPlayer()
             board.CheckFinish()
@@ -44,6 +60,9 @@ class AlphaZero:
                 for board, action_probs, player in dataset:
                     outcome = 1 if player==board.winner else -1
                     return_dataset.append((board.EncodedGameState(), action_probs, outcome))
+                    # data augmentation process (rotating and flipping the board)
+                    for transformed_data in transformations(board, action_probs, outcome):
+                        return_dataset.append(transformed_data)
                 return return_dataset
 
     
@@ -68,19 +87,19 @@ class AlphaZero:
 
 
     def Learn(self):
-        for iteration in range(self.params["n_iterations"]):
+        for iteration in tqdm(range(self.params["n_iterations"]), desc="AlphaZero Algorithm Iterations", leave=False, unit="iter", ncols=100, colour="#fc6a65"):
             dataset = []
 
             self.model.eval()
-            for sp_iteration in range(self.params["self_play_iterations"]):
+            for sp_iteration in tqdm(range(self.params["self_play_iterations"]), desc="Self-Play Iterations", leave=False, unit="iter", ncols=100, colour="#fca965"):
                 dataset += self.SelfPlay()
             
             self.model.train()
-            for epoch in range(self.params["n_epochs"]):
+            for epoch in tqdm(range(self.params["n_epochs"]), desc="Training Model", leave=False, unit="epoch", ncols=100, colour="#9ffc65"):
                 self.Train(dataset)
             
-            torch.save(self.model.state_dict(), f"modelos\\{self.gameType}{self.board.size}\\{self.gameType}{self.board.size}_{iteration}.pt")
-            torch.save(self.optimizer.state_dict(), f"optimizers\\{self.gameType}{self.board.size}\\{self.gameType}_{self.board.size}_{iteration}.pt")
+            torch.save(self.model.state_dict(), f"./Models/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{iteration}.pt")
+            torch.save(self.optimizer.state_dict(), f"./Optimizers/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{iteration}_opt.pt")
 
 
         

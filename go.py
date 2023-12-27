@@ -131,8 +131,8 @@ class GoBoard:
             elif self.hasFinished():
                 scores = self.calculate_scores()
                 self.winner = 1 if scores[1] > scores[2] else 2
-        else:
-            print("NOT A VALID MOVE")
+        # else:
+        #     print("NOT A VALID MOVE")
 
     def CheckFinish(self):
         if (self.players_last_move[1] == (-1,-1) and self.players_last_move[2] == (-1,-1)):
@@ -220,6 +220,16 @@ class GoBoard:
         scores[2] += 5.5
         return scores
     
+    def rotate90(self, times):
+        copy = deepcopy(self)
+        copy.board = np.rot90(copy.board, times)
+        return copy
+
+    def flip_vertical(self):
+        copy = deepcopy(self)
+        copy.board = np.flip(copy.board, 0)
+        return copy
+
     def EncodedGameState(self):
         encoded_state = np.stack(
             (self.board == 1, self.board == 2, self.board == 0)

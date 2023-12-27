@@ -2,6 +2,7 @@ import numpy as np
 import graphics
 import pygame
 from time import sleep
+from copy import deepcopy
 
 class AttaxxBoard:
     def __init__(self, dim):
@@ -86,14 +87,13 @@ class AttaxxBoard:
         for i in range(self.size):
             for j in range(self.size):
                 if self.board[i][j] == 0:
-                    self.board[i][j] = 3- self.player
-                    self.ShowBoard(True)
-
-        if render:
-            graphics.unselect_piece()
-            graphics.draw_board(self.board)
-            pygame.display.flip()
-            sleep(1/(2*self.size))
+                    self.board[i][j] = 3-self.player
+                    if render:
+                        self.ShowBoard(True)
+                        graphics.unselect_piece()
+                        graphics.draw_board(self.board)
+                        pygame.display.flip()
+                        sleep(1/(2*self.size))
     
     def PieceCount(self):
         count1= 0
@@ -119,6 +119,16 @@ class AttaxxBoard:
     
     def hasFinished(self):
         return self.winner != 0
+    
+    def rotate90(self, times):
+        copy = deepcopy(self)
+        copy.board = np.rot90(copy.board, times)
+        return copy
+
+    def flip_vertical(self):
+        copy = deepcopy(self)
+        copy.board = np.flip(copy.board, 0)
+        return copy
     
     def EncodedGameState(self):
         encoded_state = np.stack(

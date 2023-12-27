@@ -3,6 +3,7 @@ from ataxx import AttaxxBoard
 from go import GoBoard
 from copy import deepcopy
 import torch
+from tqdm import tqdm
 
 class MCTS_Node:
     def __init__(self, board, parent=None, move=None, policy_value=0) -> None:
@@ -73,7 +74,7 @@ class MCTS:
     def Search(self):
         self.root = MCTS_Node(self.board)
 
-        for _ in range(self.n_iterations):
+        for _ in tqdm(range(self.n_iterations), desc="MCTS Iterations", leave=False, unit="iter", ncols=100, colour="#f7fc65"):
             node = self.root
             while len(node.children) > 0:
                 node = node.Select()
@@ -87,7 +88,7 @@ class MCTS:
         
         action_space_size = self.board.size**4 if type(self.board) == AttaxxBoard else (self.board.size**2)+1
         action_probs = numpy.zeros(shape=action_space_size)
-        print(len(self.root.children.items()))
+        #print(len(self.root.children.items()))
         for action, child in self.root.children.items():
             action_probs[action] = child.n
         action_probs /= numpy.sum(action_probs)
