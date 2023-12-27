@@ -12,7 +12,7 @@ class MCTS_Node:
         self.p = policy_value # Probability returned from NN
         
         self.originMove = move
-        self.parent: MCTS_Node = parent
+        self.parent = parent
         self.children = {} # Save all children 
 
 
@@ -29,7 +29,7 @@ class MCTS_Node:
             if child.n != 0:
                 ucb = (child.w/child.n) + child.p*c*(self.n**(1/2))/(1+child.n)
             else: 
-                ucb = 0 # numpy.inf or child.p*c*(self.n**(1/2))/(1+child.n)
+                ucb = child.p*c*(self.n**(1/2))/(1+child.n) # exploration weight of the UCB formula
 
             # Update max UCB value, as well as best Node
             if ucb > max_ucb: 
