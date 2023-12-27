@@ -23,7 +23,7 @@ class Net(Module):
             nn.ReLU(),
             nn.Flatten(),
             nn.Linear(32 * size * size, action_size),
-            nn.Softmax(dim=0)
+            nn.Softmax(dim=1)
         )
         
         self.valueHead = nn.Sequential(
