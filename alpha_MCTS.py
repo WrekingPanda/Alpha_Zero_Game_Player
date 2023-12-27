@@ -4,11 +4,11 @@ from go import GoBoard
 from copy import deepcopy
 
 class MCTS_Node:
-    def __init__(self, board, parent=None, move=None) -> None:
+    def __init__(self, board, parent=None, move=None, policy_value=0) -> None:
         self.board : AttaxxBoard | GoBoard = board
         self.w = 0 # Sum of backpropagation 
         self.n = 0 # Num of visits
-        self.p = 0 # Probability returned from NN
+        self.p = policy_value # Probability returned from NN
         
         self.originMove = move
         self.parent: MCTS_Node = parent
