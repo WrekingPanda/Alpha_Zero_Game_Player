@@ -41,7 +41,7 @@ class MCTS_Node:
         return numpy.random.choice(best_node)
 
 
-    def Expansion(self, policy): # Policy??? maybe we should change smth xd
+    def Expansion(self, policy):
         if len(self.children) != 0 or self.board.winner != 0:
             return
 
@@ -78,9 +78,9 @@ class MCTS:
                 node = node.Select()
 
             game_state = node.board.EncodedGameState()
-            policy, value = self.model(game_state) # Completeeee
+            policy, value = self.model(game_state)
 
-            node.Expansion(policy) # should pass policy hereee 
+            node.Expansion(policy) 
             node.BackPropagation(value)
         
         action_space_size = self.board.size**2
