@@ -1,9 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
 from torch.nn import Linear, ReLU, Sequential, Conv2d, Module, Softmax, BatchNorm2d
-from torch.optim import Adam, SGD
 from torchsummary import summary
 
 class Net(Module):
