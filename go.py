@@ -211,6 +211,12 @@ class GoBoard:
         # komi
         scores[2] += 5.5
         return scores
+    
+    def EncodedGameState(self):
+        encoded_state = np.stack(
+            (self.board == 1, self.board == 2, self.board == 0)
+        ).astype(np.float32)
+        return encoded_state
 
 
 ###############################################

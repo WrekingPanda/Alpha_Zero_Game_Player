@@ -2,10 +2,11 @@ import numpy
 from ataxx import AttaxxBoard
 from go import GoBoard
 from copy import deepcopy
+import torch
 
 class MCTS_Node:
     def __init__(self, board, parent=None, move=None, policy_value=0) -> None:
-        self.board : AttaxxBoard | GoBoard = board
+        self.board = board
         self.w = 0 # Sum of backpropagation 
         self.n = 0 # Num of visits
         self.p = policy_value # Probability returned from NN
@@ -40,7 +41,7 @@ class MCTS_Node:
         return numpy.random.choice(best_node)
 
 
-    def Expansion(self): # Policy??? maybe we should change smth xd
+    def Expansion(self, policy): # Policy??? maybe we should change smth xd
         if len(self.children) != 0 or self.board.winner != 0:
             return
 
@@ -49,7 +50,7 @@ class MCTS_Node:
             cur_board = deepcopy(self.board)
             cur_board.Move(move)
             action = self.board.MoveToAction(move)
-            self.children[action] = MCTS_Node(cur_board, self, move)
+            self.children[action] = MCTS_Node(cur_board, self, move, policy_value=policy[action])
 
 
     def BackPropagation(self, value):
@@ -62,11 +63,12 @@ class MCTS_Node:
 
 class MCTS:
     def __init__(self, board, n_iterations, model) -> None:
-        self.board: AttaxxBoard | GoBoard = board
+        self.board = board
         self.n_iterations = n_iterations
         self.model = model
         self.root = MCTS_Node(self.board)
 
+    @torch.no_grad()
     def Search(self):
         self.root = MCTS_Node(self.board)
 
@@ -75,9 +77,10 @@ class MCTS:
             while len(node.children) > 0:
                 node = node.Select()
 
-            policy, value = self.model() # Completeeee
+            game_state = node.board.EncodedGameState()
+            policy, value = self.model(game_state) # Completeeee
 
-            node.Expansion() # should pass policy hereee 
+            node.Expansion(policy) # should pass policy hereee 
             node.BackPropagation(value)
         
         action_space_size = self.board.size**2

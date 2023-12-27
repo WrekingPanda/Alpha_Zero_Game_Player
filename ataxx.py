@@ -117,6 +117,12 @@ class AttaxxBoard:
     def hasFinished(self):
         return self.winner != 0
     
+    def EncodedGameState(self):
+        encoded_state = np.stack(
+            (self.board == 1, self.board == 2, self.board == 0)
+        ).astype(np.float32)
+        return encoded_state
+    
 
 def GameLoop():
     size = int(input("Size: "))
