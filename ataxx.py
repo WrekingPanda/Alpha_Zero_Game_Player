@@ -44,8 +44,9 @@ class AttaxxBoard:
     
     def MoveToAction(self, move):
         i1, j1, i2, j2 = move
-        size = self.board.size
-        return j1 + i1*size + j2*size**2 + i2*size**3
+        size = self.size
+        action = j1 + i1*size + j2*(size**2) + i2*(size**3)
+        return action
     
     def ValidMove(self, row, col, nextRow, nextCol):
         if (self.board[row, col] != self.player):
@@ -81,16 +82,18 @@ class AttaxxBoard:
     def NextPlayer(self):
         self.player = 3-self.player
 
-    def Fill(self):
-        graphics.unselect_piece()
+    def Fill(self,render=False):
         for i in range(self.size):
             for j in range(self.size):
                 if self.board[i][j] == 0:
                     self.board[i][j] = 3- self.player
                     self.ShowBoard(True)
-                    graphics.draw_board(self.board)
-                    pygame.display.flip()
-                    sleep(1/(2*self.size))
+
+        if render:
+            graphics.unselect_piece()
+            graphics.draw_board(self.board)
+            pygame.display.flip()
+            sleep(1/(2*self.size))
     
     def PieceCount(self):
         count1= 0

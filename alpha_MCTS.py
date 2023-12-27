@@ -46,6 +46,7 @@ class MCTS_Node:
             return
 
         possibleMoves = self.board.PossibleMoves()
+        policy = policy.squeeze(0)
         for move in possibleMoves:
             cur_board = deepcopy(self.board)
             cur_board.Move(move)
@@ -78,15 +79,15 @@ class MCTS:
                 node = node.Select()
 
             game_state = node.board.EncodedGameState()
+            game_state = torch.tensor(game_state).unsqueeze(0)
             policy, value = self.model(game_state)
 
             node.Expansion(policy) 
             node.BackPropagation(value)
         
-        action_space_size = self.board.size**2
-        if type(self.board) == GoBoard:
-            action_space_size += 1
+        action_space_size = self.board.size**4 if type(self.board) == AttaxxBoard else (self.board.size**2)+1
         action_probs = numpy.zeros(shape=action_space_size)
+        print(len(self.root.children.items()))
         for action, child in self.root.children.items():
             action_probs[action] = child.n
         action_probs /= numpy.sum(action_probs)

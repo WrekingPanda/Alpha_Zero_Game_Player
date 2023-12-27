@@ -134,8 +134,16 @@ class GoBoard:
         else:
             print("NOT A VALID MOVE")
 
+    def CheckFinish(self):
+        if (self.players_last_move[1] == (-1,-1) and self.players_last_move[2] == (-1,-1)):
+            scores = self.calculate_scores()
+            if scores[1] > scores[2]: 
+                self.winner = 1
+            else:
+                self.winner = 2 
+        
     def hasFinished(self):
-        return (self.players_last_move[1] == (-1,-1) and self.players_last_move[2] == (-1,-1)) or self.winner != 0
+        return self.winner != 0
     
     def PossibleMoves(self):
         moves = []
@@ -148,9 +156,9 @@ class GoBoard:
     
     def MoveToAction(self, move):
         if move == (-1,-1):
-            return self.board.size**2
+            return self.size**2
         i, j = move
-        return j + i*self.board.size
+        return j + i*self.size
 
     def calculate_scores(self):
         self_copy = deepcopy(self)

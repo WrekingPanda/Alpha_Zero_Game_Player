@@ -29,9 +29,15 @@ class AlphaZero:
 
             dataset.append((board, action_probs, board.player)) 
             action_list = list(range(len(action_probs)))
-            action = np.ramdom.choice(action_list, p=action_probs)
+            action = np.random.choice(action_list, p=action_probs)
             move = self.mcts.root.children[action].originMove
             board.Move(move)
+            print(board.hasFinished())
+            print(board.winner)
+            print(board.board)
+
+            board.NextPlayer()
+            board.CheckFinish()
 
             if board.hasFinished():
                 return_dataset = []
@@ -39,8 +45,6 @@ class AlphaZero:
                     outcome = 1 if player==board.winner else -1
                     return_dataset.append((board.EncodedGameState(), action_probs, outcome))
                 return return_dataset
-            
-            board.NextPlayer()
 
     
     def Train(self, dataset):
@@ -75,8 +79,8 @@ class AlphaZero:
             for epoch in range(self.params["n_epochs"]):
                 self.Train(dataset)
             
-            torch.save(self.model.state_dict(), f"model_{iteration}.pt")
-            torch.save(self.optimizer.state_dict(), f"optimizer_{iteration}.pt")
+            torch.save(self.model.state_dict(), f"modelos\\{self.gameType}{self.board.size}\\{self.gameType}{self.board.size}_{iteration}.pt")
+            torch.save(self.optimizer.state_dict(), f"optimizers\\{self.gameType}{self.board.size}\\{self.gameType}_{self.board.size}_{iteration}.pt")
 
 
         
