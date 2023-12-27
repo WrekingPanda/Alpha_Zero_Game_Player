@@ -1,6 +1,5 @@
 import numpy as np
 from copy import deepcopy
-from pprint import pprint
 
 class Group:
     def __init__(self, stone_coords, go_board):
