@@ -86,9 +86,9 @@ class MCTS:
         for action, child in root.children.items():
             action_probs[action] = child.n
         action_probs /= numpy.sum(action_probs)
-        """ 
-        if to return probabilities:
-            return action_probs
-        """
-        final_action = action_probs.argmax()
-        return root.children[final_action].originMove
+        return action_probs
+
+        # to obtain the resulting move
+        # final_action = action_probs.argmax()
+        # root.children[final_action].originMove
+        
