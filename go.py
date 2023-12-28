@@ -149,7 +149,7 @@ class GoBoard:
         moves = []
         for i in range(self.size):
             for j in range(self.size):
-                if self.board[i,j] == 0:
+                if self.ValidMove(i,j):
                     moves.append((i,j))
         moves.append((-1,-1))
         return moves
