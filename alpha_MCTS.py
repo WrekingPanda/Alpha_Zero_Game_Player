@@ -3,7 +3,9 @@ from ataxx import AttaxxBoard
 from go import GoBoard
 from copy import deepcopy
 import torch
+
 from tqdm import tqdm
+#from tqdm.notebook import tqdm
 
 class MCTS_Node:
     def __init__(self, board, parent=None, move=None, policy_value=0) -> None:
@@ -80,7 +82,7 @@ class MCTS:
             while len(node.children) > 0:
                 node = node.Select()
 
-            game_state = node.board.EncodedGameState()
+            game_state = node.board.EncodedGameStateChanged()
             game_state = torch.tensor(game_state).unsqueeze(0)
             policy, value = self.model(game_state)
 

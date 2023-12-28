@@ -5,6 +5,7 @@ from go import GoBoard
 
 import random
 from tqdm import tqdm
+#from tqdm.notebook import tqdm
 
 import torch
 import torch.nn.functional as F
@@ -16,13 +17,13 @@ warnings.filterwarnings("ignore")
 # for the data augmentation process
 def transformations(board_state, action_probs, outcome):
     transf = []
-    transf.append((board_state.flip_vertical().EncodedGameState(), action_probs, outcome))             # flip vertically
-    transf.append((board_state.rotate90(1).EncodedGameState(), action_probs, outcome))                 # rotate 90
-    transf.append((board_state.rotate90(1).flip_vertical().EncodedGameState(), action_probs, outcome)) # rotate 90 and flip vertically
-    transf.append((board_state.rotate90(2).EncodedGameState(), action_probs, outcome))                 # rotate 180
-    transf.append((board_state.rotate90(2).flip_vertical().EncodedGameState(), action_probs, outcome)) # rotate 180 and flip vertically
-    transf.append((board_state.rotate90(3).EncodedGameState(), action_probs, outcome))                 # rotate 270
-    transf.append((board_state.rotate90(3).flip_vertical().EncodedGameState(), action_probs, outcome)) # rotate 270 and flip vertically
+    transf.append((board_state.flip_vertical().EncodedGameStateChanged(), action_probs, outcome))             # flip vertically
+    transf.append((board_state.rotate90(1).EncodedGameStateChanged(), action_probs, outcome))                 # rotate 90
+    transf.append((board_state.rotate90(1).flip_vertical().EncodedGameStateChanged(), action_probs, outcome)) # rotate 90 and flip vertically
+    transf.append((board_state.rotate90(2).EncodedGameStateChanged(), action_probs, outcome))                 # rotate 180
+    transf.append((board_state.rotate90(2).flip_vertical().EncodedGameStateChanged(), action_probs, outcome)) # rotate 180 and flip vertically
+    transf.append((board_state.rotate90(3).EncodedGameStateChanged(), action_probs, outcome))                 # rotate 270
+    transf.append((board_state.rotate90(3).flip_vertical().EncodedGameStateChanged(), action_probs, outcome)) # rotate 270 and flip vertically
     return transf
 
 class AlphaZero:
@@ -59,7 +60,7 @@ class AlphaZero:
                 return_dataset = []
                 for board, action_probs, player in dataset:
                     outcome = 1 if player==board.winner else -1
-                    return_dataset.append((board.EncodedGameState(), action_probs, outcome))
+                    return_dataset.append((board.EncodedGameStateChanged(), action_probs, outcome))
                     # data augmentation process (rotating and flipping the board)
                     for transformed_data in transformations(board, action_probs, outcome):
                         return_dataset.append(transformed_data)
