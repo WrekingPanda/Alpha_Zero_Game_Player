@@ -28,18 +28,24 @@ def transformations(board_state, action_probs, outcome):
 
 class AlphaZero:
     # params = {n_iterations=10, self_play_iterations=10, mcts_iterations=100, n_epochs=10}
-    def __init__(self, model, optimizer, board, gameType, **params):
+    def __init__(self, model, optimizer, board, gameType, data_augmentation=False, **params):
         self.model = model
         self.optimizer = optimizer
         self.board = board
         self.gameType = gameType
         self.params = params
+        self.data_augmentation = data_augmentation
 
-    def SelfPlay(self):
+    def SelfPlay(self, verbose=False):
         dataset = []
         board = AttaxxBoard(self.board.size) if self.gameType == "A" else GoBoard(self.board.size)
         board.Start(render=False)
         self.mcts = MCTS(board, self.params["mcts_iterations"], self.model)
+
+        if verbose:
+            with open(f"./selfplay_{self.gameType}{board.size}.txt", 'w') as file:
+                file.write(f"")
+                file.close()
 
         while True:
             action_probs = self.mcts.Search()
@@ -49,21 +55,26 @@ class AlphaZero:
             action = np.random.choice(action_list, p=action_probs)
             move = self.mcts.root.children[action].originMove
             board.Move(move)
-            # print(board.hasFinished())
-            # print(board.winner)
-            # print(board.board)
-
+            if verbose:
+                with open(f"./selfplay_{self.gameType}{board.size}.txt", 'a') as file:
+                    file.write(f"[Player {board.player}] Move: {move}\n{board.board}\n")
+                    file.close()
             board.NextPlayer()
             board.CheckFinish()
 
             if board.hasFinished():
+                if verbose:
+                    with open(f"./selfplay_{self.gameType}{board.size}.txt", 'a') as file:
+                        file.write(f"Winner: {board.winner}\n\n====================\n")
+                        file.close()
                 return_dataset = []
                 for board, action_probs, player in dataset:
                     outcome = 1 if player==board.winner else -1
                     return_dataset.append((board.EncodedGameStateChanged(), action_probs, outcome))
                     # data augmentation process (rotating and flipping the board)
-                    for transformed_data in transformations(board, action_probs, outcome):
-                        return_dataset.append(transformed_data)
+                    if self.data_augmentation:
+                        for transformed_data in transformations(board, action_probs, outcome):
+                            return_dataset.append(transformed_data)
                 return return_dataset
 
     
@@ -93,7 +104,7 @@ class AlphaZero:
 
             self.model.eval()
             for sp_iteration in tqdm(range(self.params["self_play_iterations"]), desc="Self-Play Iterations", leave=False, unit="iter", ncols=100, colour="#fca965"):
-                dataset += self.SelfPlay()
+                dataset += self.SelfPlay(verbose=True)
             
             self.model.train()
             for epoch in tqdm(range(self.params["n_epochs"]), desc="Training Model", leave=False, unit="epoch", ncols=100, colour="#9ffc65"):
