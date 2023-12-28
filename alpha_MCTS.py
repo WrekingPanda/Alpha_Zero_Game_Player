@@ -51,7 +51,8 @@ class MCTS_Node:
         for move in possibleMoves:
             cur_board = deepcopy(self.board)
             cur_board.Move(move)
-            action = self.board.MoveToAction(move)
+            action = cur_board.MoveToAction(move)
+            cur_board.NextPlayer()
             self.children[action] = MCTS_Node(cur_board, self, move, policy_value=policy[action])
 
 
