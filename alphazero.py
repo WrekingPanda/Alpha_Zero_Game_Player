@@ -81,7 +81,7 @@ class AlphaZero:
     def Train(self, dataset):
         random.shuffle(dataset)
         for batch_index in range(0, len(dataset), self.params['batch_size']):
-            sample = dataset[batch_index:min(len(dataset)-1, batch_index + self.params["batch_size"])]
+            sample = dataset[batch_index : batch_index+self.params["batch_size"]]
             board_encoded, policy_targets, value_targets = zip(*sample)
             board_encoded, policy_targets, value_targets = np.array(board_encoded), np.array(policy_targets), np.array(value_targets).reshape(-1, 1)
             board_encoded = torch.tensor(board_encoded, dtype=torch.float32)

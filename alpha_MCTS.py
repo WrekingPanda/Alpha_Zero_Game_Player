@@ -29,10 +29,8 @@ class MCTS_Node:
         
         for child in self.children.values():
             # Calculate UCB for each children
-            if child.n != 0:
-                ucb = (child.w/child.n) + child.p*c*(self.n**(1/2))/(1+child.n)
-            else: 
-                ucb = child.p*c*(self.n**(1/2))/(1+child.n) # exploration weight of the UCB formula
+            ucb = child.w/child.n if child.n != 0 else 0
+            ucb += child.p*c*(self.n**(1/2))/(1+child.n)
 
             # Update max UCB value, as well as best Node
             if ucb > max_ucb: 
