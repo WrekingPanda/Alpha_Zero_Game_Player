@@ -70,7 +70,7 @@ class GoBoard:
         for _ in range(2*self.size+1): out += "-"
         return out
     
-    def Start(self, render=True):
+    def Start(self, render=False):
         if render:
             pygame.init()
             graphics.SET_GLOBALS("g",self.board)

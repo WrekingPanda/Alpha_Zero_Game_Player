@@ -29,8 +29,7 @@ class MCTS_Node:
         
         for child in self.children.values():
             # Calculate UCB for each children
-            ucb = child.w/child.n if child.n != 0 else 0
-            ucb += child.p*c*(self.n**(1/2))/(1+child.n)
+            ucb = child.w/child.n + child.p*c*(self.n**(1/2))/(1+child.n) if child.n != 0 else 0
 
             # Update max UCB value, as well as best Node
             if ucb > max_ucb: 
@@ -47,12 +46,12 @@ class MCTS_Node:
             return
 
         possibleMoves = self.board.PossibleMoves()
-        policy = policy.squeeze(0)
         for move in possibleMoves:
             cur_board = deepcopy(self.board)
             cur_board.Move(move)
             action = cur_board.MoveToAction(move)
             cur_board.NextPlayer()
+            cur_board.CheckFinish()
             self.children[action] = MCTS_Node(cur_board, self, move, policy_value=policy[action])
 
 
@@ -65,15 +64,27 @@ class MCTS_Node:
 
 
 class MCTS:
-    def __init__(self, board, n_iterations, model) -> None:
+    def __init__(self, board, n_iterations, model, dirichlet_eps=0.25) -> None:
         self.board = board
         self.n_iterations = n_iterations
         self.model = model
+        self.dirichlet_eps = dirichlet_eps
         self.root = MCTS_Node(self.board)
 
     @torch.no_grad()
     def Search(self):
         self.root = MCTS_Node(self.board)
+
+        # add noise to the root's policy array
+        game_state = self.root.board.EncodedGameStateChanged()
+        game_state = torch.tensor(game_state, device=self.model.device).unsqueeze(0)
+        policy, _ = self.model(game_state)
+        policy = policy.squeeze(0).cpu().numpy()
+        action_space_size = self.board.size**4 if type(self.board)==AttaxxBoard else self.board.size**2+1
+        dirichlet_arr = numpy.ones(shape=action_space_size)/action_space_size
+        policy = (1-self.dirichlet_eps)*policy + self.dirichlet_eps*numpy.random.dirichlet(dirichlet_arr)
+        self.root.Expansion(policy)
+        self.root.n = 1
 
         for _ in tqdm(range(self.n_iterations), desc="MCTS Iterations", leave=False, unit="iter", ncols=100, colour="#f7fc65"):
             node = self.root
@@ -81,9 +92,9 @@ class MCTS:
                 node = node.Select()
 
             game_state = node.board.EncodedGameStateChanged()
-            game_state = torch.tensor(game_state).unsqueeze(0)
+            game_state = torch.tensor(game_state, device=self.model.device).unsqueeze(0)
             policy, value = self.model(game_state)
-
+            policy = policy.squeeze(0).cpu().numpy()
             node.Expansion(policy) 
             node.BackPropagation(value)
         

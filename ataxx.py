@@ -11,7 +11,7 @@ class AttaxxBoard:
         self.player = 1
         self.winner = 0
         
-    def Start(self, render=True):
+    def Start(self, render=False):
         self.board[0][0] = 1
         self.board[-1][-1] = 1
         self.board[0][-1] = 2

@@ -7,6 +7,8 @@ from torchsummary import summary
 class Net(Module):
     def __init__(self, size, action_size, num_resBlocks, num_hidden):
         super().__init__()
+
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.startBlock = nn.Sequential(
             nn.Conv2d(3, num_hidden, kernel_size=size, padding='same'),
             nn.BatchNorm2d(num_hidden),
@@ -34,6 +36,8 @@ class Net(Module):
             nn.Linear(size * size * size, 1),
             nn.Tanh()
         )
+
+        self.to(self.device)
     
     def forward(self, x):
         x = self.startBlock(x)

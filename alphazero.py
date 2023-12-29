@@ -28,13 +28,14 @@ def transformations(board_state, action_probs, outcome):
 
 class AlphaZero:
     # params = {n_iterations=10, self_play_iterations=10, mcts_iterations=100, n_epochs=10}
-    def __init__(self, model, optimizer, board, gameType, data_augmentation=False, **params):
+    def __init__(self, model, optimizer, board, gameType, data_augmentation=False, verbose=False, **params):
         self.model = model
         self.optimizer = optimizer
         self.board = board
         self.gameType = gameType
         self.params = params
         self.data_augmentation = data_augmentation
+        self.verbose = verbose
 
     def SelfPlay(self, verbose=False):
         dataset = []
@@ -84,9 +85,10 @@ class AlphaZero:
             sample = dataset[batch_index : batch_index+self.params["batch_size"]]
             board_encoded, policy_targets, value_targets = zip(*sample)
             board_encoded, policy_targets, value_targets = np.array(board_encoded), np.array(policy_targets), np.array(value_targets).reshape(-1, 1)
-            board_encoded = torch.tensor(board_encoded, dtype=torch.float32)
-            policy_targets = torch.tensor(policy_targets, dtype=torch.float32)
-            value_targets = torch.tensor(value_targets, dtype=torch.float32)
+            
+            board_encoded = torch.tensor(board_encoded, dtype=torch.float32, device=self.model.device)
+            policy_targets = torch.tensor(policy_targets, dtype=torch.float32, device=self.model.device)
+            value_targets = torch.tensor(value_targets, dtype=torch.float32, device=self.model.device)
 
             out_policy, out_value = self.model(board_encoded)
             policy_loss = F.cross_entropy(out_policy, policy_targets)
@@ -104,7 +106,7 @@ class AlphaZero:
 
             self.model.eval()
             for sp_iteration in tqdm(range(self.params["self_play_iterations"]), desc="Self-Play Iterations", leave=False, unit="iter", ncols=100, colour="#fca965"):
-                dataset += self.SelfPlay(verbose=True)
+                dataset += self.SelfPlay(verbose=self.verbose)
             
             self.model.train()
             for epoch in tqdm(range(self.params["n_epochs"]), desc="Training Model", leave=False, unit="epoch", ncols=100, colour="#9ffc65"):
