@@ -278,7 +278,7 @@ class GoBoard:
 import pygame
 import graphics
 
-""" if __name__ == "__main__":
+if __name__ == "__main__":
     b = GoBoard(9)
     b.Start(render=True)
     graphics.draw_board(b.board)
@@ -298,45 +298,5 @@ import graphics
         # else:
         #     print("NOT A VALID MOVE")
         graphics.draw_board(b.board)
-    print(b.calculate_scores()) """
-
-from tqdm import tqdm
-
-if __name__ == "__main__":
-    for _ in tqdm(range(10)):
-        bb = GoBoard(9)
-        bb.Start()
-        count = 0
-        for _ in range(50):
-            i = np.random.randint(0, 10)
-            j = np.random.randint(0, 10)
-            while not bb.ValidMove(i,j):
-                count += 1
-                if count < 100:
-                    i = np.random.randint(0, 10)
-                    j = np.random.randint(0, 10)
-                else:
-                    i, j = -1, -1
-            bb.Move((i,j))
-            bb.NextPlayer()
-            bb.CheckFinish()
-
-        for _ in tqdm(range(10)):
-            b = deepcopy(bb)
-            for _ in range(150):
-                i = np.random.randint(0, 10)
-                j = np.random.randint(0, 10)
-                while not b.ValidMove(i,j):
-                    count += 1
-                    if count < 100:
-                        i = np.random.randint(0, 10)
-                        j = np.random.randint(0, 10)
-                    else:
-                        i, j = -1, -1
-                b.Move((i,j))
-                b.NextPlayer()
-                b.CheckFinish()
-
-    
-
+    print(b.calculate_scores())
 
