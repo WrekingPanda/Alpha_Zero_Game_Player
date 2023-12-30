@@ -15,16 +15,30 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # for the data augmentation process
-def transformations(board_state, action_probs, outcome):
-    transf = []
-    transf.append((board_state.flip_vertical().EncodedGameStateChanged(), action_probs, outcome))             # flip vertically
-    transf.append((board_state.rotate90(1).EncodedGameStateChanged(), action_probs, outcome))                 # rotate 90
-    transf.append((board_state.rotate90(1).flip_vertical().EncodedGameStateChanged(), action_probs, outcome)) # rotate 90 and flip vertically
-    transf.append((board_state.rotate90(2).EncodedGameStateChanged(), action_probs, outcome))                 # rotate 180
-    transf.append((board_state.rotate90(2).flip_vertical().EncodedGameStateChanged(), action_probs, outcome)) # rotate 180 and flip vertically
-    transf.append((board_state.rotate90(3).EncodedGameStateChanged(), action_probs, outcome))                 # rotate 270
-    transf.append((board_state.rotate90(3).flip_vertical().EncodedGameStateChanged(), action_probs, outcome)) # rotate 270 and flip vertically
-    return transf
+def transformations(board_state, action_probs, outcome, gameType):
+    if gameType == 'G':
+        side = (action_probs-1)**(1/2)
+        transf = []
+        transf.append((board_state.flip_vertical().EncodedGameStateChanged(), np.append(np.flip(np.copy(action_probs)[:-1].reshape(side,side),0).flatten(),action_probs[-1]), outcome))                         # flip vertically
+        transf.append((board_state.rotate90(1).EncodedGameStateChanged(), np.append(np.rot90(np.copy(action_probs)[:-1].reshape(side,side),1).flatten(),action_probs[-1]), outcome))                            # rotate 90
+        transf.append((board_state.rotate90(1).flip_vertical().EncodedGameStateChanged(), np.append(np.rot90(np.flip(np.copy(action_probs)[:-1].reshape(side,side),1),0).flatten(),action_probs[-1]), outcome)) # rotate 90 and flip vertically
+        transf.append((board_state.rotate90(2).EncodedGameStateChanged(), np.append(np.rot90(np.copy(action_probs)[:-1].reshape(side,side),2).flatten(),action_probs[-1]), outcome))                            # rotate 180
+        transf.append((board_state.rotate90(2).flip_vertical().EncodedGameStateChanged(), np.append(np.rot90(np.flip(np.copy(action_probs)[:-1].reshape(side,side),1),0).flatten(),action_probs[-1]), outcome)) # rotate 180 and flip vertically
+        transf.append((board_state.rotate90(3).EncodedGameStateChanged(), np.append(np.rot90(np.copy(action_probs)[:-1].reshape(side,side),3).flatten(),action_probs[-1]), outcome))                            # rotate 270
+        transf.append((board_state.rotate90(3).flip_vertical().EncodedGameStateChanged(), np.append(np.rot90(np.flip(np.copy(action_probs)[:-1].reshape(side,side),1),0).flatten(),action_probs[-1]), outcome)) # rotate 270 and flip vertically
+        return transf
+    elif gameType == 'A':
+        side = action_probs**(1/4)
+        transf = []
+        transf.append((board_state.flip_vertical().EncodedGameStateChanged(), np.flip(np.flip(np.copy(action_probs).reshape(side,side,side,side),2),0).flatten(), outcome))                                                 # flip vertically
+        transf.append((board_state.rotate90(1).EncodedGameStateChanged(), np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),1,(2,3)),1,(0,1)).flatten(), outcome))                                       # rotate 90
+        transf.append((board_state.rotate90(1).flip_vertical().EncodedGameStateChanged(), np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),1,(2,3)),1,(0,1)),2),0).flatten(), outcome)) # rotate 90 and flip vertically
+        transf.append((board_state.rotate90(2).EncodedGameStateChanged(), np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),2,(2,3)),2,(0,1)).flatten(), outcome))                                       # rotate 180
+        transf.append((board_state.rotate90(2).flip_vertical().EncodedGameStateChanged(), np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),2,(2,3)),2,(0,1)),2),0).flatten(), outcome)) # rotate 180 and flip vertically
+        transf.append((board_state.rotate90(3).EncodedGameStateChanged(), np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),3,(2,3)),3,(0,1)).flatten(), outcome))                                       # rotate 270
+        transf.append((board_state.rotate90(3).flip_vertical().EncodedGameStateChanged(), np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),3,(2,3)),3,(0,1)),2),0).flatten(), outcome)) # rotate 270 and flip vertically
+        return transf
+    return []
 
 class AlphaZero:
     # params = {n_iterations=10, self_play_iterations=10, mcts_iterations=100, n_epochs=10}
