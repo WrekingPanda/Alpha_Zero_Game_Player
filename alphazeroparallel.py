@@ -3,6 +3,7 @@ from alpha_MCTS import MCTS
 from ataxx import AttaxxBoard
 from go import GoBoard
 
+from copy import deepcopy
 import random
 from tqdm import tqdm
 #from tqdm.notebook import tqdm
@@ -13,6 +14,12 @@ torch.manual_seed(0)
 
 import warnings
 warnings.filterwarnings("ignore")
+
+from threading import Thread
+
+az_copies = []
+threads = []
+parallel_selfplay_dataset_results = []
 
 # for the data augmentation process
 def transformations(board_state, action_probs, outcome, gameType):
@@ -29,7 +36,6 @@ def transformations(board_state, action_probs, outcome, gameType):
         return transf
     elif gameType == 'A':
         side = board_state.size
-        print(side, type(side))
         transf = []
         transf.append((board_state.flip_vertical().EncodedGameStateChanged(), np.flip(np.flip(np.copy(action_probs).reshape(side,side,side,side),2),0).flatten(), outcome))                                                 # flip vertically
         transf.append((board_state.rotate90(1).EncodedGameStateChanged(), np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),1,(2,3)),1,(0,1)).flatten(), outcome))                                       # rotate 90
@@ -41,7 +47,7 @@ def transformations(board_state, action_probs, outcome, gameType):
         return transf
     return []
 
-class AlphaZero:
+class AlphaZeroParallel:
     # params = {n_iterations=10, self_play_iterations=10, mcts_iterations=100, n_epochs=10}
     def __init__(self, model, optimizer, board, gameType, data_augmentation=False, verbose=False, **params):
         self.model = model
@@ -52,14 +58,15 @@ class AlphaZero:
         self.data_augmentation = data_augmentation
         self.verbose = verbose
 
-    def SelfPlay(self, verbose=False):
+    def SelfPlay(self, verbose=False, store_result_index=None):
         dataset = []
         board = AttaxxBoard(self.board.size) if self.gameType == "A" else GoBoard(self.board.size)
         board.Start(render=False)
         self.mcts = MCTS(board, self.params["mcts_iterations"], self.model)
 
         if verbose:
-            with open(f"./selfplay_{self.gameType}{board.size}.txt", 'w') as file:
+            file_name = f"./selfplay_{self.gameType}{board.size}.txt" if store_result_index == None else f"./selfplay_{self.gameType}{board.size}_p{store_result_index}.txt"
+            with open(file_name, 'w') as file:
                 file.write(f"")
                 file.close()
 
@@ -72,7 +79,8 @@ class AlphaZero:
             move = self.mcts.root.children[action].originMove
             board.Move(move)
             if verbose:
-                with open(f"./selfplay_{self.gameType}{board.size}.txt", 'a') as file:
+                file_name = f"./selfplay_{self.gameType}{board.size}.txt" if store_result_index == None else f"./selfplay_{self.gameType}{board.size}_p{store_result_index}.txt"
+                with open(file_name, 'a') as file:
                     file.write(f"[Player {board.player}] Move: {move}\n{board.board}\n")
                     file.close()
             board.NextPlayer()
@@ -80,7 +88,8 @@ class AlphaZero:
 
             if board.hasFinished():
                 if verbose:
-                    with open(f"./selfplay_{self.gameType}{board.size}.txt", 'a') as file:
+                    file_name = f"./selfplay_{self.gameType}{board.size}.txt" if store_result_index == None else f"./selfplay_{self.gameType}{board.size}_p{store_result_index}.txt"
+                    with open(file_name, 'a') as file:
                         file.write(f"Winner: {board.winner}\n\n====================\n")
                         file.close()
                 return_dataset = []
@@ -91,6 +100,10 @@ class AlphaZero:
                     if self.data_augmentation:
                         for transformed_data in transformations(board, action_probs, outcome, self.gameType):
                             return_dataset.append(transformed_data)
+                # for parallel selfplay games
+                if store_result_index != None:
+                    global parallel_selfplay_dataset_results
+                    parallel_selfplay_dataset_results[store_result_index] = return_dataset
                 return return_dataset
 
     
@@ -114,14 +127,25 @@ class AlphaZero:
             loss.backward()
             self.optimizer.step()
 
-
     def Learn(self):
+        global az_copies, threads, parallel_selfplay_dataset_results
+        az_copies = [None] * self.params["n_self_play_parallel"]
+        threads = [None] * self.params["n_self_play_parallel"]
+        parallel_selfplay_dataset_results = [None] * self.params["n_self_play_parallel"]
+
         for iteration in tqdm(range(self.params["n_iterations"]), desc="AlphaZero Algorithm Iterations", leave=False, unit="iter", ncols=100, colour="#fc6a65"):
             dataset = []
 
             self.model.eval()
-            for sp_iteration in tqdm(range(self.params["self_play_iterations"]), desc="Self-Play Iterations", leave=False, unit="iter", ncols=100, colour="#fca965"):
-                dataset += self.SelfPlay(verbose=self.verbose)
+            for sp_iteration in tqdm(range(self.params["self_play_iterations"]//self.params["n_self_play_parallel"]), desc="Self-Play Iterations", leave=False, unit="iter", ncols=100, colour="#fca965"):
+                for i in range(self.params["n_self_play_parallel"]):
+                    az_copies[i] = deepcopy(self)
+                    threads[i] = Thread(target=az_copies[i].SelfPlay, args=(self.verbose, i))
+                    threads[i].start()
+                for i in range(self.params["n_self_play_parallel"]):
+                    threads[i].join()
+                for i in range(self.params["n_self_play_parallel"]):
+                    dataset += parallel_selfplay_dataset_results[i]
             
             self.model.train()
             for epoch in tqdm(range(self.params["n_epochs"]), desc="Training Model", leave=False, unit="epoch", ncols=100, colour="#9ffc65"):
