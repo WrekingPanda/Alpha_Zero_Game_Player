@@ -88,14 +88,17 @@ class GoBoard:
         if coords == (-1,-1):
             return True
         if self.is_in(i,j):
+            # non-empty cell
             if self.board[coords] != 0:
+                return False
+            # repetition of board
+            if self.players_last_move[self.player] == coords:
                 return False
             copy = deepcopy(self)
             Group(coords, copy)
             copy.players_groups[copy.player].append(copy.group_of_stone[coords])
-            copy.update_player_groups()
+            copy.update_player_groups(coords)
             if copy.group_of_stone[coords].count_liberties() != 0:
-                # repetition of board
                 return (
                     (self.players_prev_boards[self.player] == None) or 
                     (self.players_prev_boards[self.player] != None and self.players_prev_boards[self.player] != str(copy.board))
@@ -105,34 +108,58 @@ class GoBoard:
         # out of bounds
         return False
                 
-    def update_player_groups(self):
-        opponent_groups = self.players_groups[3-self.player]
-        for group in opponent_groups:
-            group.liberty_points = group.get_liberty_points()
-            group.liberties = group.count_liberties()
-            if group.liberties == 0:
-                self.players_captured_opp_stones[self.player] += len(group.stones)
-                for stone in group.stones:
-                    self.board[stone] = 0
-                    self.group_of_stone[stone] = None
-                opponent_groups.remove(group)
-        for group in self.players_groups[self.player]:
-            group.liberty_points = group.get_liberty_points()
-            group.liberties = group.count_liberties()
+    def update_player_groups(self, move):
+        if move == (-1,-1):
+            return
+
+        played_stone = move
+        adj_stones = [(played_stone[0]+di, played_stone[1]+dj) for di,dj in [(-1,0),(1,0),(0,-1),(0,1)] if self.is_in(played_stone[0]+di, played_stone[1]+dj)]
+        updated_groups = set()
+        for adj_stone in adj_stones:
+            # stone of the same group
+            if self.board[adj_stone] == self.board[played_stone] and self.group_of_stone[played_stone] not in updated_groups:
+                #player group
+                p_group = self.group_of_stone[played_stone]
+                p_group.liberty_points = p_group.get_liberty_points()
+                p_group.liberties = p_group.count_liberties()
+                updated_groups.add(p_group)
+            # stone of the opponent
+            elif self.board[adj_stone] == 3-self.player:
+                opp_group = self.group_of_stone[adj_stone]
+                if opp_group not in updated_groups:
+                    # opp group lost all liberties -> opp group to be deleted & player groups' liberties need to be updated
+                    if len(opp_group.liberty_points) == 1 and played_stone in opp_group.liberty_points:
+                        p_groups_to_be_updated = []
+                        self.players_captured_opp_stones[self.player] += len(opp_group.stones)
+                        for opp_stone in opp_group.stones:
+                            # look for player's groups adjacent to the opp group to be deleted
+                            opp_adj_stones = [(opp_stone[0]+di, opp_stone[1]+dj) for di,dj in [(-1,0),(1,0),(0,-1),(0,1)] if self.is_in(opp_stone[0]+di, opp_stone[1]+dj)]
+                            for opp_adj_stone in opp_adj_stones:
+                                if self.board[opp_adj_stone] == self.player:
+                                    p_groups_to_be_updated.append(self.group_of_stone[opp_adj_stone])
+                            # delete opp group
+                            self.board[opp_stone] = 0
+                            self.group_of_stone[opp_stone] = None
+                        # update registed player's groups
+                        for p_group in p_groups_to_be_updated:
+                            p_group.liberty_points = p_group.get_liberty_points()
+                            p_group.liberties = p_group.count_liberties()
+                    # remove the liberty point
+                    elif len(opp_group.liberty_points) > 1:
+                        opp_group.liberty_points.remove(played_stone)
+                        opp_group.liberties -= 1
+                        updated_groups.add(opp_group)
 
     def Move(self, coords):
-        if self.ValidMove(*coords):
-            self.players_last_move[self.player] = coords
-            if coords != (-1,-1):
-                Group(coords, self)
-                self.players_groups[self.player].append(self.group_of_stone[coords])
-                self.update_player_groups()
-                self.players_prev_boards[self.player] = str(self.board)
-            elif self.hasFinished():
-                scores = self.calculate_scores()
-                self.winner = 1 if scores[1] > scores[2] else 2
-        # else:
-        #     print("NOT A VALID MOVE")
+        self.players_last_move[self.player] = coords
+        if coords != (-1,-1):
+            Group(coords, self)
+            self.players_groups[self.player].append(self.group_of_stone[coords])
+            self.update_player_groups(coords)
+            self.players_prev_boards[self.player] = str(self.board)
+        elif self.hasFinished():
+            scores = self.calculate_scores()
+            self.winner = 1 if scores[1] > scores[2] else 2
 
     def CheckFinish(self):
         if (self.players_last_move[1] == (-1,-1) and self.players_last_move[2] == (-1,-1)):
@@ -219,6 +246,51 @@ class GoBoard:
         # komi
         scores[2] += 5.5
         return scores
+
+    
+    # CALCULATE TERRITORY
+    def count_influenced_territory_enhanced(self, board):
+        black_territory = 0
+        white_territory = 0
+        visited = set()
+
+        # Function to calculate influence score
+        def influence_score(x, y):
+            score = 0
+            for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < len(board) and 0 <= ny < len(board[0]):
+                    # Count dead stones as territory for the opponent
+                    if board[nx][ny] == 2:  # Dead black stone
+                        score -= 1
+                    elif board[nx][ny] == -2:  # Dead white stone
+                        score += 1
+                    else:
+                        score += board[nx][ny]
+            return score
+
+        # Function to explore territory
+        def explore_territory(x, y):
+            nonlocal black_territory, white_territory
+            if (x, y) in visited or not (0 <= x < len(board) and 0 <= y < len(board[0])):
+                return
+            visited.add((x, y))
+
+            if board[x][y] == 0:
+                score = influence_score(x, y)
+                if score > 0:
+                    black_territory += 1
+                elif score < 0:
+                    white_territory += 1
+
+        for i in range(len(board)):
+            for j in range(len(board[0])):
+                if board[i][j] == 0 and (i, j) not in visited:
+                    explore_territory(i, j)
+
+        return black_territory, white_territory
+
+
     
     def rotate90(self, times):
         copy = deepcopy(self)
@@ -250,11 +322,9 @@ class GoBoard:
 import pygame
 import graphics
 
-if __name__ == "__main__":
+""" if __name__ == "__main__":
     b = GoBoard(9)
-    pygame.init()
-    graphics.SET_GLOBALS("g", b.board)
-    graphics.SET_SCREEN()
+    b.Start(render=True)
     graphics.draw_board(b.board)
     count_pass = 0
     while True:
@@ -265,8 +335,52 @@ if __name__ == "__main__":
                 break
         else:
             count_pass = 0
-        b.Move((i,j))
-        b.NextPlayer()
+        if b.ValidMove(i,j):
+            b.Move((i,j))
+            b.NextPlayer()
+            b.CheckFinish()
+        # else:
+        #     print("NOT A VALID MOVE")
         graphics.draw_board(b.board)
-    print(b.calculate_scores())
+    print(b.calculate_scores()) """
+
+from tqdm import tqdm
+
+if __name__ == "__main__":
+    for _ in tqdm(range(10)):
+        bb = GoBoard(9)
+        bb.Start()
+        count = 0
+        for _ in range(50):
+            i = np.random.randint(0, 10)
+            j = np.random.randint(0, 10)
+            while not bb.ValidMove(i,j):
+                count += 1
+                if count < 100:
+                    i = np.random.randint(0, 10)
+                    j = np.random.randint(0, 10)
+                else:
+                    i, j = -1, -1
+            bb.Move((i,j))
+            bb.NextPlayer()
+            bb.CheckFinish()
+
+        for _ in tqdm(range(10)):
+            b = deepcopy(bb)
+            for _ in range(150):
+                i = np.random.randint(0, 10)
+                j = np.random.randint(0, 10)
+                while not b.ValidMove(i,j):
+                    count += 1
+                    if count < 100:
+                        i = np.random.randint(0, 10)
+                        j = np.random.randint(0, 10)
+                    else:
+                        i, j = -1, -1
+                b.Move((i,j))
+                b.NextPlayer()
+                b.CheckFinish()
+
+    
+
 

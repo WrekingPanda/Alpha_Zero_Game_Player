@@ -146,7 +146,7 @@ class AttaxxBoard:
 def GameLoop():
     size = int(input("Size: "))
     board = AttaxxBoard(size)
-    board.Start()
+    board.Start(render=True)
     graphics.draw_board(board.board)
     pygame.display.flip()
     board.ShowBoard()
