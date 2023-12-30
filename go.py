@@ -246,51 +246,7 @@ class GoBoard:
         # komi
         scores[2] += 5.5
         return scores
-
     
-    # CALCULATE TERRITORY
-    def count_influenced_territory_enhanced(self, board):
-        black_territory = 0
-        white_territory = 0
-        visited = set()
-
-        # Function to calculate influence score
-        def influence_score(x, y):
-            score = 0
-            for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < len(board) and 0 <= ny < len(board[0]):
-                    # Count dead stones as territory for the opponent
-                    if board[nx][ny] == 2:  # Dead black stone
-                        score -= 1
-                    elif board[nx][ny] == -2:  # Dead white stone
-                        score += 1
-                    else:
-                        score += board[nx][ny]
-            return score
-
-        # Function to explore territory
-        def explore_territory(x, y):
-            nonlocal black_territory, white_territory
-            if (x, y) in visited or not (0 <= x < len(board) and 0 <= y < len(board[0])):
-                return
-            visited.add((x, y))
-
-            if board[x][y] == 0:
-                score = influence_score(x, y)
-                if score > 0:
-                    black_territory += 1
-                elif score < 0:
-                    white_territory += 1
-
-        for i in range(len(board)):
-            for j in range(len(board[0])):
-                if board[i][j] == 0 and (i, j) not in visited:
-                    explore_territory(i, j)
-
-        return black_territory, white_territory
-
-
     
     def rotate90(self, times):
         copy = deepcopy(self)
