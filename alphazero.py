@@ -69,6 +69,7 @@ class AlphaZero:
         if self.fill_size==0:
             size = self.board.size
         dataset = []
+        return_dataset=[]
         board = AttaxxBoard(size) if self.gameType == "A" else GoBoard(size)
         board.Start(render=False)
         if self.fill_size==0:
@@ -100,7 +101,7 @@ class AlphaZero:
                     with open(f"./selfplay_{self.gameType}{board.size}.txt", 'a') as file:
                         file.write(f"Winner: {board.winner}\n\n====================\n")
                         file.close()
-                return_dataset = [(board.EncodedGameStateChanged(self.fill_size), action_probs, board.winner)]
+                dataset = [(board.EncodedGameStateChanged(self.fill_size), action_probs, board.winner)]
                 for board, action_probs, player in dataset:
                     outcome = 1 if player==board.winner else -1
                     return_dataset.append((board.EncodedGameStateChanged(self.fill_size), action_probs, outcome))
