@@ -108,9 +108,9 @@ class AttaxxBoard:
     
     def CheckFinish(self, render=False):
         if (len(self.PossibleMoves())) == 0:
-            if render:
-                self.Fill(render)
-            c1,c2 = self.PieceCount()
+            copy = deepcopy(self)
+            copy.Fill(render)
+            c1,c2 = copy.PieceCount()
             if c1 > c2:
                 self.winner = 1
             elif c1 < c2:
