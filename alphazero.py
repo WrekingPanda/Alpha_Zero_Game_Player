@@ -83,7 +83,7 @@ class AlphaZero:
                     with open(f"./selfplay_{self.gameType}{board.size}.txt", 'a') as file:
                         file.write(f"Winner: {board.winner}\n\n====================\n")
                         file.close()
-                return_dataset = []
+                return_dataset = [(deepcopy(board), action_probs, board.player)]
                 for board, action_probs, player in dataset:
                     outcome = 1 if player==board.winner else -1
                     return_dataset.append((board.EncodedGameStateChanged(), action_probs, outcome))
