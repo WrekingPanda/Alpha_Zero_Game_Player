@@ -43,11 +43,16 @@ class AttaxxBoard:
                                 moves.append((row,col,nextRow,nextCol))
         return moves
     
-    def MoveToAction(self, move):
-        i1, j1, i2, j2 = move
-        size = self.size
-        action = j1 + i1*size + j2*(size**2) + i2*(size**3)
-        return action
+    def MoveToAction(self, move, fill_size=0):
+        if fill_size==0 or fill_size==self.size:
+            i1, j1, i2, j2 = move
+            size = self.size
+            action = j1 + i1*size + j2*(size**2) + i2*(size**3)
+            return action
+        else:
+            i1, j1, i2, j2 = move
+            action = j1 + i1*fill_size + j2*(fill_size**2) + i2*(fill_size**3)
+            return action
     
     def ValidMove(self, row, col, nextRow, nextCol):
         if (self.board[row, col] != self.player):
@@ -137,12 +142,20 @@ class AttaxxBoard:
         ).astype(np.float32)
         return encoded_state
 
-    def EncodedGameStateChanged(self):
+    def EncodedGameStateChanged(self, fill_size=0):
         encoded_state = np.stack(
             (self.board == self.player, self.board == 3-self.player, self.board == 0)
-        ).astype(np.float32)
-        return encoded_state
-    
+            ).astype(np.float32)
+        if fill_size == 0 or fill_size==self.size:
+            return encoded_state
+        else:
+            encoded = []
+            for state in encoded_state:
+                copy = np.copy(state)
+                filled = np.pad(copy,(0,fill_size-self.size),'constant',constant_values=(-1))
+                encoded.append(filled)
+            return np.array(encoded)
+
 
 def GameLoop():
     size = int(input("Size: "))

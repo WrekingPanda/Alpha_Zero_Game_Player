@@ -181,7 +181,7 @@ class GoBoard:
         moves.append((-1,-1))
         return moves
     
-    def MoveToAction(self, move):
+    def MoveToAction(self, move, fill_size):
         if move == (-1,-1):
             return self.size**2
         i, j = move
@@ -264,7 +264,7 @@ class GoBoard:
         ).astype(np.float32)
         return encoded_state
     
-    def EncodedGameStateChanged(self):
+    def EncodedGameStateChanged(self, fill_size):
         encoded_state = np.stack(
             (self.board == self.player, self.board == 3-self.player, self.board == 0)
         ).astype(np.float32)
