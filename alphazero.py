@@ -82,7 +82,7 @@ class AlphaZero:
                 file.close()
 
         while True:
-            action_probs = self.mcts.Search()
+            action_probs = self.mcts.Search(board)
 
             dataset.append((deepcopy(board), action_probs, board.player)) 
             action = np.argmax(action_probs)

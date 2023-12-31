@@ -74,8 +74,8 @@ class MCTS:
         self.fill_size= fill_size
 
     @torch.no_grad()
-    def Search(self):
-        self.root = MCTS_Node(self.board, fill_size=self.fill_size)
+    def Search(self, board_root):
+        self.root = MCTS_Node(board_root, fill_size=self.fill_size)
 
         # add noise to the root's policy array
         game_state = self.root.board.EncodedGameStateChanged(self.fill_size)
