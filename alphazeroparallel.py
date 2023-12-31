@@ -73,9 +73,8 @@ class AlphaZeroParallel:
         while True:
             action_probs = self.mcts.Search()
 
-            dataset.append((board, action_probs, board.player)) 
-            action_list = list(range(len(action_probs)))
-            action = np.random.choice(action_list, p=action_probs)
+            dataset.append((deepcopy(board), action_probs, board.player)) 
+            action = np.argmax(action_probs)
             move = self.mcts.root.children[action].originMove
             board.Move(move)
             if verbose:

@@ -106,9 +106,10 @@ class AttaxxBoard:
                     count2+=1
         return count1,count2
     
-    def CheckFinish(self):
+    def CheckFinish(self, render=False):
         if (len(self.PossibleMoves())) == 0:
-            self.Fill()
+            if render:
+                self.Fill(render)
             c1,c2 = self.PieceCount()
             if c1 > c2:
                 self.winner = 1

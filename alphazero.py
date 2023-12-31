@@ -3,6 +3,7 @@ from alpha_MCTS import MCTS
 from ataxx import AttaxxBoard
 from go import GoBoard
 
+from copy import deepcopy
 import random
 from tqdm import tqdm
 #from tqdm.notebook import tqdm
@@ -66,9 +67,8 @@ class AlphaZero:
         while True:
             action_probs = self.mcts.Search()
 
-            dataset.append((board, action_probs, board.player)) 
-            action_list = list(range(len(action_probs)))
-            action = np.random.choice(action_list, p=action_probs)
+            dataset.append((deepcopy(board), action_probs, board.player)) 
+            action = np.argmax(action_probs)
             move = self.mcts.root.children[action].originMove
             board.Move(move)
             if verbose:
