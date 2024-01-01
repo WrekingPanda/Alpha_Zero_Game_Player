@@ -43,13 +43,13 @@ def transformations(board_state, action_probs, outcome, gameType, fill_size=0):
         else:
             side = board_state.size
             transf = []
-            transf.append((board_state.flip_vertical().EncodedGameStateChanged(fill_size), np.flip(np.flip(np.copy(action_probs).reshape(side,side,side,side),2),0).flatten(), outcome))                                                 # flip vertically
-            transf.append((board_state.rotate90(1).EncodedGameStateChanged(fill_size), np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),1,(2,3)),1,(0,1)).flatten(), outcome))                                       # rotate 90
-            transf.append((board_state.rotate90(1).flip_vertical().EncodedGameStateChanged(fill_size), np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),1,(2,3)),1,(0,1)),2),0).flatten(), outcome)) # rotate 90 and flip vertically
-            transf.append((board_state.rotate90(2).EncodedGameStateChanged(fill_size), np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),2,(2,3)),2,(0,1)).flatten(), outcome))                                       # rotate 180
-            transf.append((board_state.rotate90(2).flip_vertical().EncodedGameStateChanged(fill_size), np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),2,(2,3)),2,(0,1)),2),0).flatten(), outcome)) # rotate 180 and flip vertically
-            transf.append((board_state.rotate90(3).EncodedGameStateChanged(fill_size), np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),3,(2,3)),3,(0,1)).flatten(), outcome))                                       # rotate 270
-            transf.append((board_state.rotate90(3).flip_vertical().EncodedGameStateChanged(fill_size), np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),3,(2,3)),3,(0,1)),2),0).flatten(), outcome)) # rotate 270 and flip vertically
+            transf.append((board_state.flip_vertical().EncodedGameStateChanged(fill_size), np.pad(np.flip(np.flip(np.copy(action_probs).reshape(fill_size,fill_size,fill_size,fill_size)[:side,:side,:side,:side],2),0),(0,fill_size-side),'constant',constant_values=(0)).flatten(), outcome))                                                 # flip vertically
+            transf.append((board_state.rotate90(1).EncodedGameStateChanged(fill_size),np.pad(np.rot90(np.rot90(np.copy(action_probs).reshape(fill_size,fill_size,fill_size,fill_size)[:side,:side,:side,:side],1,(2,3)),1,(0,1)),(0,fill_size-side),'constant',constant_values=(0)).flatten(), outcome))                                       # rotate 90
+            transf.append((board_state.rotate90(1).flip_vertical().EncodedGameStateChanged(fill_size), np.pad(np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(fill_size,fill_size,fill_size,fill_size)[:side,:side,:side,:side],1,(2,3)),1,(0,1)),2),0),(0,fill_size-side),'constant',constant_values=(0)).flatten(), outcome)) # rotate 90 and flip vertically
+            transf.append((board_state.rotate90(2).EncodedGameStateChanged(fill_size), np.pad(np.rot90(np.rot90(np.copy(action_probs).reshape(fill_size,fill_size,fill_size,fill_size)[:side,:side,:side,:side],2,(2,3)),2,(0,1)),(0,fill_size-side),'constant',constant_values=(0)).flatten(), outcome))                                       # rotate 180
+            transf.append((board_state.rotate90(2).flip_vertical().EncodedGameStateChanged(fill_size), np.pad(np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(fill_size,fill_size,fill_size,fill_size)[:side,:side,:side,:side],2,(2,3)),2,(0,1)),2),0),(0,fill_size-side),'constant',constant_values=(0)).flatten(), outcome)) # rotate 180 and flip vertically
+            transf.append((board_state.rotate90(3).EncodedGameStateChanged(fill_size), np.pad(np.rot90(np.rot90(np.copy(action_probs).reshape(fill_size,fill_size,fill_size,fill_size)[:side,:side,:side,:side],3,(2,3)),3,(0,1)),(0,fill_size-side),'constant',constant_values=(0)).flatten(), outcome))                                       # rotate 270
+            transf.append((board_state.rotate90(3).flip_vertical().EncodedGameStateChanged(fill_size), np.pad(np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(fill_size,fill_size,fill_size,fill_size)[:side,:side,:side,:side],3,(2,3)),3,(0,1)),2),0),(0,fill_size-side),'constant',constant_values=(0)).flatten(), outcome)) # rotate 270 and flip vertically
             return transf
     return []
 
@@ -100,7 +100,7 @@ class AlphaZero:
                     with open(f"./selfplay_{self.gameType}{board.size}.txt", 'a') as file:
                         file.write(f"Winner: {board.winner}\n\n====================\n")
                         file.close()
-                return_dataset = [(board.EncodedGameStateChanged(self.fill_size), action_probs, 1 if 3-board.player==board.winner else -1)]
+                return_dataset = [(board.EncodedGameStateChanged(self.fill_size), action_probs, 1 if board.player==board.winner else -1)]
                 for board, action_probs, player in dataset:
                     outcome = 1 if player==board.winner else -1
                     return_dataset.append((board.EncodedGameStateChanged(self.fill_size), action_probs, outcome))
@@ -153,7 +153,7 @@ class AlphaZero:
                 torch.save(self.model.state_dict(), f"./Models/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{iteration}.pt")
                 torch.save(self.optimizer.state_dict(), f"./Optimizers/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{iteration}_opt.pt")
             else:
-                torch.save(self.model.state_dict(), f"./Models/{str.upper(self.gameType)}flex/{str.upper(self.gameType)}flex_{iteration}.pt")
-                torch.save(self.optimizer.state_dict(), f"./Optimizers/{str.upper(self.gameType)}flex/{str.upper(self.gameType)}flex_{iteration}_opt.pt")
+                torch.save(self.model.state_dict(), f"C:\\Users\\anfis\\Databases\\Models\\{str.upper(self.gameType)}flex\\{str.upper(self.gameType)}flex.pt")
+            torch.save(self.optimizer.state_dict(), f"C:\\Users\\anfis\\Databases\\Optimizers\\{str.upper(self.gameType)}flex\\{str.upper(self.gameType)}flex_opt.pt")
 
         
