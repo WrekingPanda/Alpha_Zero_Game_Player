@@ -3,8 +3,8 @@ from new_go_mcts import MCTSParallel
 from no_oop_go import GoFunctional as GF, EncodedGameStateChanged, rotate90, flip_vertical
 
 import random
-#from tqdm import tqdm
-from tqdm.notebook import tqdm
+from tqdm import tqdm
+#from tqdm.notebook import tqdm
 
 import torch
 import torch.nn.functional as F
@@ -56,7 +56,8 @@ class AlphaZeroParallel2:
                 board_array, player, lt_boards, winner = boards[i]
                 action_probs = boards_actions_probs[i]
                 boards_dataset[i].append((np.copy(board_array), action_probs, player))
-                action = np.argmax(action_probs)
+                moves = list(range(len(action_probs)))
+                action = np.random.choice(moves, p=action_probs)
                 move = self.mcts.roots[i].children[action].originMove
                 next_board_array = np.copy(board_array)
                 next_lt_boards = np.copy(lt_boards)
@@ -117,5 +118,5 @@ class AlphaZeroParallel2:
             for epoch in tqdm(range(self.params["n_epochs"]), desc="Training Model", leave=False, unit="epoch", ncols=100, colour="#9ffc65"):
                 self.Train(dataset)
             
-            torch.save(self.model.state_dict(), f"./Models/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{iteration}.pt")
-            torch.save(self.optimizer.state_dict(), f"./Optimizers/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{iteration}_opt.pt")
+            torch.save(self.model.state_dict(), f"../Models/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{iteration}.pt")
+            torch.save(self.optimizer.state_dict(), f"../Optimizers/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{iteration}_opt.pt")

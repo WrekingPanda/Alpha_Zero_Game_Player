@@ -9,7 +9,7 @@ def train():
     model = Net(9,(9**2)+1,40,64)
     #board = GoBoard(9)
     optimizer = Adam(model.parameters(), lr=0.001, weight_decay=0.0001)
-    params = {"n_iterations":10, "self_play_iterations":20, "mcts_iterations":100, "n_epochs":100, "batch_size":64, "n_self_play_parallel":1}
+    params = {"n_iterations":10, "self_play_iterations":20, "mcts_iterations":100, "n_epochs":100, "batch_size":64, "n_self_play_parallel":5}
     Alpha = AlphaZeroParallel2(model, optimizer, 9, 'G', data_augmentation=True, **params)
     Alpha.Learn()
 

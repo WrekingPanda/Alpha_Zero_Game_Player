@@ -10,14 +10,14 @@ warnings.filterwarnings("ignore")
 board = AttaxxBoard(4)
 board.Start()
 model = Net(4,4**4,40,64)
-model.load_state_dict(torch.load("A4.pt", map_location="cuda" if torch.cuda.is_available() else "cpu"))
+model.load_state_dict(torch.load("A4_9.pt", map_location="cuda" if torch.cuda.is_available() else "cpu"))
 model.eval()
 mcts = MCTS(board, 75, model)
 
 while True:
     print(board.board)
 
-    if board.player == 1:
+    if board.player == 2:
         i1, j1, i2, j2 = list(map(int, input("Move: ").split(" ")))
         if board.ValidMove(i1, j1, i2, j2):
             board.Move((i1, j1, i2, j2))
@@ -28,6 +28,9 @@ while True:
 
     else:
         mcts_probs = mcts.Search(board)
+        for i in range(len(mcts_probs)):
+            if mcts.root.children.get(i):
+                print(mcts.root.children[i].originMove, mcts_probs[i])
         action = np.argmax(mcts_probs)
         move = mcts.root.children[action].originMove
         print("Alphazero Move:", move)

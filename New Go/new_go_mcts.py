@@ -2,8 +2,8 @@ import numpy as np
 import torch
 from no_oop_go import GoFunctional as GF, EncodedGameStateChanged
 
-#from tqdm import tqdm
-from tqdm.notebook import tqdm
+from tqdm import tqdm
+#from tqdm.notebook import tqdm
 
 class MCTS_Node:
     def __init__(self, board, player, last_two_boards, winner, parent=None, move=None, policy_value=0) -> None:

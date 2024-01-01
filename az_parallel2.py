@@ -67,7 +67,8 @@ class AlphaZeroParallel2:
             for i in range(len(boards))[::-1]:
                 action_probs = boards_actions_probs[i]
                 boards_dataset[i].append((deepcopy(boards[i]), action_probs, boards[i].player))
-                action = np.argmax(action_probs)
+                moves = list(range(len(action_probs)))
+                action = np.random.choice(moves, p=action_probs)
                 move = self.mcts.roots[i].children[action].originMove
                 boards[i].Move(move)
                 boards[i].NextPlayer()
