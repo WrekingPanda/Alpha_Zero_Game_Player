@@ -3,6 +3,7 @@ import graphics
 import pygame
 from time import sleep
 from copy import deepcopy
+import math
 
 class AttaxxBoard:
     def __init__(self, dim):
@@ -110,6 +111,49 @@ class AttaxxBoard:
                 elif self.board[i][j] == 2:
                     count2+=1
         return count1,count2
+    
+    def score(self, player):
+        points = self.PieceCount()
+        if player==1:
+            return points[0]-points[1]
+        return points[1]-points[0]
+    
+    def minimax(self,depth, max_player, alpha, beta, player):
+        self.CheckFinish()
+        if self.winner==player:
+            return None,self.size**2+1
+        if self.winner==3-player:
+            return None,-(self.size**2+1)
+        if depth==0:
+            return None,self.score(player)
+        if max_player:
+            value = -math.inf
+            for move in self.PossibleMoves():
+                copy = deepcopy(self)
+                copy.Move(move)
+                copy.NextPlayer()
+                new = copy.minimax(depth-1,False,alpha,beta, player)[1]
+                if new > value:
+                    value = new
+                    best = move
+                if value >= beta:
+                    break
+                alpha = max(alpha,value)
+            return best,value
+        else:
+            value = math.inf
+            for move in self.PossibleMoves():
+                copy = deepcopy(self)
+                copy.Move(move)
+                copy.NextPlayer()
+                new = copy.minimax(depth-1,True,alpha,beta, player)[1]
+                if new < value:
+                    value = new
+                    best = move
+                if value <= alpha:
+                    break
+                beta = min(beta,value)
+            return best,value
     
     def CheckFinish(self, render=False):
         if (len(self.PossibleMoves())) == 0:
