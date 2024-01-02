@@ -68,8 +68,8 @@ class AlphaZeroParallel2:
                 # update boards[i]
                 boards[i] = (next_board_array, next_player, next_lt_boards, next_winner)
 
-                print("\nNEW BOARD Move:", move)
-                print(next_board_array)
+                #print("\nNEW BOARD Move:", move)
+                #print(next_board_array)
 
                 if next_winner != 0:
                     print("\nGAME ENDED\n")
