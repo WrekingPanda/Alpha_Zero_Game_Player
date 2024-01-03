@@ -1,5 +1,6 @@
 from ataxx import AttaxxBoard
 import torch
+torch.manual_seed(0)
 from CNN import Net
 from alpha_MCTS import MCTS
 import numpy as np
@@ -9,15 +10,15 @@ warnings.filterwarnings("ignore")
 
 board = AttaxxBoard(4)
 board.Start()
-model = Net(4,4**4,40,64)
-model.load_state_dict(torch.load("A4_9.pt", map_location="cuda" if torch.cuda.is_available() else "cpu"))
+model = Net(4,4**4,10,128)
+model.load_state_dict(torch.load("A4_0.pt", map_location="cuda" if torch.cuda.is_available() else "cpu"))
 model.eval()
-mcts = MCTS(board, 75, model)
+mcts = MCTS(board, 150, model)
 
 while True:
     print(board.board)
 
-    if board.player == 2:
+    if board.player == 1:
         i1, j1, i2, j2 = list(map(int, input("Move: ").split(" ")))
         if board.ValidMove(i1, j1, i2, j2):
             board.Move((i1, j1, i2, j2))
