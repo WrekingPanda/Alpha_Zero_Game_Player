@@ -2,8 +2,6 @@ import numpy as np
 import graphics
 import pygame
 from time import sleep
-from copy import deepcopy
-import math
 
 class AttaxxBoard:
     def __init__(self, dim):
@@ -11,6 +9,13 @@ class AttaxxBoard:
         self.board = np.zeros(shape=(self.size,self.size), dtype=int)
         self.player = 1
         self.winner = 0
+
+    def copy(self):
+        copy = AttaxxBoard(self.size)
+        copy.board = np.copy(self.board)
+        copy.player = self.player
+        copy.winner = self.winner
+        return copy
         
     def Start(self, render=False):
         self.board[0][0] = 1
@@ -127,9 +132,9 @@ class AttaxxBoard:
         if depth==0:
             return None,self.score(player)
         if max_player:
-            value = -math.inf
+            value = -np.inf
             for move in self.PossibleMoves():
-                copy = deepcopy(self)
+                copy = self.copy()
                 copy.Move(move)
                 copy.NextPlayer()
                 new = copy.minimax(depth-1,False,alpha,beta, player)[1]
@@ -141,9 +146,9 @@ class AttaxxBoard:
                 alpha = max(alpha,value)
             return best,value
         else:
-            value = math.inf
+            value = np.inf
             for move in self.PossibleMoves():
-                copy = deepcopy(self)
+                copy = self.copy()
                 copy.Move(move)
                 copy.NextPlayer()
                 new = copy.minimax(depth-1,True,alpha,beta, player)[1]
@@ -157,9 +162,8 @@ class AttaxxBoard:
     
     def CheckFinish(self, render=False):
         if (len(self.PossibleMoves())) == 0:
-            copy = deepcopy(self)
-            copy.Fill(render)
-            c1,c2 = copy.PieceCount()
+            self.Fill(render)
+            c1,c2 = self.PieceCount()
             if c1 > c2:
                 self.winner = 1
             elif c1 < c2:
@@ -171,12 +175,12 @@ class AttaxxBoard:
         return self.winner != 0
     
     def rotate90(self, times):
-        copy = deepcopy(self)
+        copy = self.copy()
         copy.board = np.rot90(copy.board, times)
         return copy
 
     def flip_vertical(self):
-        copy = deepcopy(self)
+        copy = self.copy()
         copy.board = np.flip(copy.board, 0)
         return copy
     

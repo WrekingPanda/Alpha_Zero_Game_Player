@@ -3,10 +3,9 @@ from aMCTS_parallel import MCTSParallel
 from ataxx import AttaxxBoard
 from go import GoBoard
 
-from copy import deepcopy
 import random
-from tqdm import tqdm
-#from tqdm.notebook import tqdm
+#from tqdm import tqdm
+from tqdm.notebook import tqdm
 
 import torch
 import torch.nn.functional as F
@@ -54,6 +53,7 @@ class AlphaZeroParallel2:
 
     def SelfPlay(self):
         return_dataset = []
+        selfplays_done = 0
         boards = [None for _ in range(self.params["n_self_play_parallel"])]
         boards_dataset = [[] for _ in range(self.params["n_self_play_parallel"])]
         for i in range(self.params["n_self_play_parallel"]):
@@ -66,7 +66,7 @@ class AlphaZeroParallel2:
             boards_actions_probs = self.mcts.Search(boards)
             for i in range(len(boards))[::-1]:
                 action_probs = boards_actions_probs[i]
-                boards_dataset[i].append((deepcopy(boards[i]), action_probs, boards[i].player))
+                boards_dataset[i].append((boards[i].copy(), action_probs, boards[i].player))
                 moves = list(range(len(action_probs)))
                 action = np.random.choice(moves, p=action_probs)
                 move = self.mcts.roots[i].children[action].originMove
@@ -75,15 +75,28 @@ class AlphaZeroParallel2:
                 boards[i].CheckFinish()
 
                 if boards[i].hasFinished():
-                    boards_dataset[i].append((deepcopy(boards[i]), action_probs, boards[i].player)) # add the final config
+                    boards_dataset[i].append((boards[i].copy(), action_probs, boards[i].player)) # add the final config
+                    boards[i].NextPlayer()
+                    boards_dataset[i].append((boards[i].copy(), action_probs, boards[i].player))
+
                     for board, action_probs, player in boards_dataset[i]:
-                        outcome = 1 if player==board.winner else -1
+                        outcome = 1 if player==boards[i].winner else -1
                         return_dataset.append((board.EncodedGameStateChanged(), action_probs, outcome))
                         # data augmentation process (rotating and flipping the board)
                         if self.data_augmentation:
                             for transformed_data in transformations(board, action_probs, outcome, self.gameType):
                                 return_dataset.append(transformed_data)
-                    del boards[i]
+                    # dynamic parallel selfplay allocation
+                    selfplays_done += 1
+                    if selfplays_done % self.params["n_self_play_parallel"] == 0:
+                        print("\nSELFPLAY:", selfplays_done * 100 // self.params["self_play_iterations"], "%")
+                    if selfplays_done >= self.params["self_play_iterations"] - self.params["n_self_play_parallel"]:
+                        del boards[i]
+                    else:
+                        boards[i] = AttaxxBoard(self.board.size) if self.gameType == "A" else GoBoard(self.board.size)
+                        boards[i].Start(render=False)
+                        boards_dataset[i] = []
+        print("\nSELFPLAY: 100 %")
         return return_dataset
 
     
@@ -110,11 +123,8 @@ class AlphaZeroParallel2:
 
     def Learn(self):
         for iteration in tqdm(range(self.params["n_iterations"]), desc="AlphaZero Algorithm Iterations", leave=False, unit="iter", ncols=100, colour="#fc6a65"):
-            dataset = []
-
             self.model.eval()
-            for sp_iteration in tqdm(range(self.params["self_play_iterations"]//self.params["n_self_play_parallel"]), desc="Self-Play Iterations", leave=False, unit="iter", ncols=100, colour="#fca965"):
-                dataset += self.SelfPlay()
+            dataset = self.SelfPlay()
             
             self.model.train()
             for epoch in tqdm(range(self.params["n_epochs"]), desc="Training Model", leave=False, unit="epoch", ncols=100, colour="#9ffc65"):

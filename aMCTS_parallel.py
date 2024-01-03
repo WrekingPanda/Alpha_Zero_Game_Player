@@ -1,11 +1,12 @@
 import numpy 
 from ataxx import AttaxxBoard
 from go import GoBoard
-from copy import deepcopy
 import torch
+torch.manual_seed(0)
 
-from tqdm import tqdm
-#from tqdm.notebook import tqdm
+#from tqdm import tqdm
+from tqdm.notebook import tqdm
+
 
 class MCTS_Node:
     def __init__(self, board, parent=None, move=None, policy_value=0) -> None:
@@ -24,9 +25,13 @@ class MCTS_Node:
         best_node = []
         if len(self.children) == 0:
             return self
-        for child in self.children.values():
-            # Calculate UCB for each children
-            ucb = child.w/child.n + child.p*c*(self.n**(1/2))/(1+child.n) if child.n != 0 else child.p*c*(self.n**(1/2))/(1+child.n)
+        
+        for action, child in self.children.items():
+            # Calculate UCB for each children 
+            if child.n == 0:
+                ucb = child.p*c*(self.n**(1/2))/(1+child.n)
+            else:
+                ucb = 1 - (child.w/child.n + 1) / 2 + child.p*c*(self.n**(1/2))/(1+child.n)
 
             # Update max UCB value, as well as best Node
             if ucb > max_ucb: 
@@ -41,7 +46,7 @@ class MCTS_Node:
             return
         possibleMoves = self.board.PossibleMoves()
         for move in possibleMoves:
-            cur_board = deepcopy(self.board)
+            cur_board = self.board.copy()
             cur_board.Move(move)
             action = cur_board.MoveToAction(move)
             cur_board.NextPlayer()
@@ -85,7 +90,7 @@ class MCTSParallel:
             # selection phase
             for i in range(len(boards_obj_list)):
                 while len(nodes[i].children) > 0:
-                    nodes[i] = nodes[i].Select()            
+                    nodes[i] = nodes[i].Select()
             # get the values from NN
             boards_states = [nodes[i].board.EncodedGameStateChanged() for i in range(len(boards_obj_list))]
             boards_states = torch.tensor(boards_states, device=self.model.device)

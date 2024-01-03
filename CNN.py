@@ -1,14 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import Linear, ReLU, Sequential, Conv2d, Module, Softmax, BatchNorm2d
 from torchsummary import summary
 
-class Net(Module):
+class Net(nn.Module):
     def __init__(self, size, action_size, num_resBlocks, num_hidden):
         super().__init__()
 
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.startBlock = nn.Sequential(
             nn.Conv2d(3, num_hidden, kernel_size=size, padding='same'),
             nn.BatchNorm2d(num_hidden),
