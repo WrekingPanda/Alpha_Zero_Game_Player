@@ -22,14 +22,6 @@ class Group:
 
         self.liberty_points = self.get_liberty_points()
         self.liberties = len(self.liberty_points)
-    
-    def copy(self, go_board):
-        copy = Group((-2,-2), go_board)
-        copy.stones = self.stones.copy()
-        copy.possible_prisioner = self.possible_prisioner
-        copy.liberty_points = self.liberty_points.copy()
-        copy.liberties = self.liberties
-        return copy
 
     def get_liberty_points(self):
         liberty_pts = set()
@@ -63,19 +55,7 @@ class GoBoard:
         self.winner = 0
 
     def copy(self):
-        copy = GoBoard(self.size)
-        copy.board = np.copy(self.board)
-        copy.player = self.player
-        copy.players_groups = {1:[g.copy(copy) for g in self.players_groups[1]], 2:[g.copy(copy) for g in self.players_groups[2]]}
-        copy.group_of_stone = {(i,j): None for j in range(copy.size) for i in range(copy.size)}
-        for coords, g in self.group_of_stone.items():
-            if g is not None:
-                copy.group_of_stone[coords] = g.copy(copy)
-        copy.players_prev_boards = {1:str(self.players_prev_boards[1]), 2:str(self.players_prev_boards[2])}
-        copy.players_captured_opp_stones = self.players_captured_opp_stones.copy()
-        copy.players_last_move = self.players_last_move.copy()
-        copy.winner = self.winner
-        return copy
+        return deepcopy(self)
 
     def __eq__(self, other):
         return self.board.tolist() == other.board.tolist()
@@ -117,7 +97,7 @@ class GoBoard:
             # repetition of board
             if self.players_last_move[self.player] == coords:
                 return False
-            copy = self.copy()
+            copy = deepcopy(self)
             Group(coords, copy)
             copy.players_groups[copy.player].append(copy.group_of_stone[coords])
             copy.update_player_groups(coords)
@@ -211,8 +191,8 @@ class GoBoard:
         return j + i*self.size
 
     def calculate_scores(self):
-        self_copy = self.copy()
-        board = np.copy(self_copy.board) # copy the board
+        self_copy = deepcopy(self)
+        board = deepcopy(self_copy.board) # copy the board
 
         def flood_fill(coords, player):
             if board[coords] == 0 or (board[coords] != 1 and board[coords] != 2): board[coords] += 10+player
@@ -225,7 +205,7 @@ class GoBoard:
         # check for possible prisioners prisioners
         for player in [self_copy.player, 3-self_copy.player]:
             for opp_group in self_copy.players_groups[3-player]:
-                board = np.copy(self_copy.board) # copy the board
+                board = deepcopy(self_copy.board) # copy the board
                 for stone in opp_group.stones:
                     board = flood_fill(stone, 3-player)
                 for group in self_copy.players_groups[player]:
@@ -234,7 +214,7 @@ class GoBoard:
                         group.possible_prisioner = True
         
         # remove prisioners
-        board = np.copy(self_copy.board) # copy the board
+        board = deepcopy(self_copy.board) # copy the board
         for player in [self_copy.player, 3-self_copy.player]:
             for opp_group in self_copy.players_groups[3-player]:
                 if opp_group.possible_prisioner:
@@ -250,7 +230,7 @@ class GoBoard:
                     self_copy.players_groups[player].remove(group)
 
         # calculate territories
-        board = np.copy(self_copy.board) # copy the board
+        board = deepcopy(self_copy.board) # copy the board
         for player in [3-self_copy.player, self_copy.player]:
             for group in self_copy.players_groups[player]:
                 for stone in group.stones:
@@ -272,12 +252,12 @@ class GoBoard:
     
     
     def rotate90(self, times):
-        copy = self.copy()
+        copy = deepcopy(self)
         copy.board = np.rot90(copy.board, times)
         return copy
 
     def flip_vertical(self):
-        copy = self.copy()
+        copy = deepcopy(self)
         copy.board = np.flip(copy.board, 0)
         return copy
 
@@ -318,5 +298,6 @@ if __name__ == "__main__":
             b.Move((i,j))
             b.NextPlayer()
             b.CheckFinish()
+        # else:
+        #     print("NOT A VALID MOVE")
         graphics.draw_board(b.board)
-
