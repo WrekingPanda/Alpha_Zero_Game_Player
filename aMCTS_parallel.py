@@ -31,7 +31,7 @@ class MCTS_Node:
             if child.n == 0:
                 ucb = child.p*c*(self.n**(1/2))/(1+child.n)
             else:
-                ucb = 1 - (child.w/child.n + 1) / 2 + child.p*c*(self.n**(1/2))/(1+child.n)
+                ucb = -(child.w/child.n) + child.p*c*(self.n**(1/2))/(1+child.n)
 
             # Update max UCB value, as well as best Node
             if ucb > max_ucb: 
@@ -85,7 +85,7 @@ class MCTSParallel:
             self.roots[i].n = 1
 
         # start MCTS iterations
-        for _ in tqdm(range(self.n_iterations), desc="MCTS Iterations", leave=False, unit="iter", ncols=100, colour="#f7fc65"):             
+        for _ in tqdm(range(self.n_iterations), desc="MCTS Iterations", leave=False, unit="iter", ncols=100, colour="#f7fc65"):          
             nodes = [self.roots[i].Select() for i in range(len(boards_obj_list))]
             # selection phase
             for i in range(len(boards_obj_list)):
@@ -98,10 +98,16 @@ class MCTSParallel:
             policy = policy.cpu().numpy()
             value = value.cpu().numpy()
             for i in range(len(boards_obj_list)):
-                # expansion phase
-                nodes[i].Expansion(policy[i])
-                # backprop phase
-                nodes[i].BackPropagation(value[i][0])
+                if boards_obj_list[i].winner!=0:
+                    if boards_obj_list[i].winner==boards_obj_list[i].player:
+                        nodes[i].BackPropagation(1)
+                    elif boards_obj_list[i].winner==3-boards_obj_list[i].player:
+                        nodes[i].BackPropagation(-1)
+                else:
+                    # expansion phase
+                    nodes[i].Expansion(policy[i])
+                    # backprop phase
+                    nodes[i].BackPropagation(value[i][0])
         
         # return the actions' probabilities for each game
         action_space_size = self.roots[0].board.size**4 if type(self.roots[0].board) == AttaxxBoard else (self.roots[0].board.size**2)+1

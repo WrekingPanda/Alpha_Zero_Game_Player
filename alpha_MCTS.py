@@ -30,7 +30,7 @@ class MCTS_Node:
         
         for child in self.children.values():
             # Calculate UCB for each children
-            ucb = child.w/child.n + child.p*c*(self.n**(1/2))/(1+child.n) if child.n != 0 else 0
+            ucb = -(child.w/child.n) + child.p*c*(self.n**(1/2))/(1+child.n) if child.n != 0 else child.p*c*(self.n**(1/2))/(1+child.n)
 
             # Update max UCB value, as well as best Node
             if ucb > max_ucb: 
@@ -96,12 +96,18 @@ class MCTS:
             while len(node.children) > 0:
                 node = node.Select()
 
-            game_state = node.board.EncodedGameStateChanged(self.fill_size)
-            game_state = torch.tensor(game_state, device=self.model.device).unsqueeze(0)
-            policy, value = self.model(game_state)
-            policy = policy.squeeze(0).cpu().numpy()
-            node.Expansion(policy) 
-            node.BackPropagation(value)
+            if node.board.winner!=0:
+                if node.board.winner==node.board.player:
+                    node.BackPropagation(1)
+                elif node.board.winner==3-node.board.player:
+                    node.BackPropagation(-1)
+            else:
+                game_state = node.board.EncodedGameStateChanged(self.fill_size)
+                game_state = torch.tensor(game_state, device=self.model.device).unsqueeze(0)
+                policy, value = self.model(game_state)
+                policy = policy.squeeze(0).cpu().numpy()
+                node.Expansion(policy) 
+                node.BackPropagation(value)
         
         if self.fill_size==0:
             action_space_size = self.board.size**4 if type(self.board)==AttaxxBoard else self.board.size**2+1
