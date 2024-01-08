@@ -1,5 +1,5 @@
 import numpy as np
-from aMCTS_parallel import MCTSParallel
+from aMCTS_parallel import MCTSParallel, MCTS_Node
 from ataxx import AttaxxBoard
 from go import GoBoard
 
@@ -60,10 +60,16 @@ class AlphaZeroParallel2:
             boards[i] = AttaxxBoard(self.board.size) if self.gameType == "A" else GoBoard(self.board.size)
             boards[i].Start(render=False)
 
-        self.mcts = MCTSParallel(self.params["mcts_iterations"], self.model)
-
+        self.mcts = MCTSParallel(self.model)
+        root_boards = [MCTS_Node(board) for board in boards]
         while len(boards) > 0:
-            boards_actions_probs = self.mcts.Search(boards)
+
+            # print("\nINSIDE SELFPLAY")
+            # for root_board in root_boards:
+            #     print(root_board.originMove, root_board.n)
+            # print()
+            
+            boards_actions_probs = self.mcts.Search(root_boards, self.params["mcts_iterations"])
             for i in range(len(boards))[::-1]:
                 action_probs = boards_actions_probs[i]
                 boards_dataset[i].append((boards[i].copy(), action_probs, boards[i].player))
@@ -73,6 +79,14 @@ class AlphaZeroParallel2:
                 boards[i].Move(move)
                 boards[i].NextPlayer()
                 boards[i].CheckFinish()
+
+                # if i == 0:
+                #     print("\nFIRST BOARD GAME")
+                #     print(boards[0].board)
+
+                # update the new root (root is now the played child state)
+                root_boards[i] = self.mcts.roots[i].children[action]
+                root_boards[i].parent = None # it is needed to "remove" / "delete" the parent state
 
                 if boards[i].hasFinished():
                     boards_dataset[i].append((boards[i].copy(), action_probs, boards[i].player)) # add the final config
@@ -92,10 +106,13 @@ class AlphaZeroParallel2:
                         print("\nSELFPLAY:", selfplays_done * 100 // self.params["self_play_iterations"], "%")
                     if selfplays_done >= self.params["self_play_iterations"] - self.params["n_self_play_parallel"]:
                         del boards[i]
+                        del root_boards[i]
                     else:
                         boards[i] = AttaxxBoard(self.board.size) if self.gameType == "A" else GoBoard(self.board.size)
                         boards[i].Start(render=False)
+                        root_boards[i] = MCTS_Node(boards[i])
                         boards_dataset[i] = []
+
         print("\nSELFPLAY: 100 %")
         return return_dataset
 

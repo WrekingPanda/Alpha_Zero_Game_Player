@@ -61,15 +61,13 @@ class MCTS_Node:
 
 
 class MCTSParallel:
-    def __init__(self, n_iterations, model, dirichlet_eps=0.25) -> None:
-        self.n_iterations = n_iterations
+    def __init__(self, model) -> None:
         self.model = model
-        self.dirichlet_eps = dirichlet_eps
         self.roots = []
 
     @torch.no_grad()
-    def Search(self, boards_obj_list):
-        self.roots = [MCTS_Node(board) for board in boards_obj_list]
+    def Search(self, root_boards:list[MCTS_Node], n_iterations, dirichlet_eps=0.25, init_temp=None):
+        self.roots = root_boards
 
         # add noise to the roots' policy array
         boards_states = [root.board.EncodedGameStateChanged() for root in self.roots]
@@ -78,41 +76,48 @@ class MCTSParallel:
         policy = policy.cpu().numpy()
         action_space_size = self.roots[0].board.size**4 if type(self.roots[0].board)==AttaxxBoard else self.roots[0].board.size**2+1
         dirichlet_arr = numpy.ones(shape=action_space_size)/action_space_size
-        policy = (1-self.dirichlet_eps)*policy + self.dirichlet_eps*numpy.random.dirichlet(dirichlet_arr)
+        policy = (1-dirichlet_eps)*policy + dirichlet_eps*numpy.random.dirichlet(dirichlet_arr)
         # expand each root and associate the policy valyes with the ramifications
-        for i in range(len(boards_obj_list)):
+        for i in range(len(root_boards)):
             self.roots[i].Expansion(policy[i])
             self.roots[i].n = 1
 
         # start MCTS iterations
-        for _ in tqdm(range(self.n_iterations), desc="MCTS Iterations", leave=False, unit="iter", ncols=100, colour="#f7fc65"):          
-            nodes = [self.roots[i].Select() for i in range(len(boards_obj_list))]
+        for _ in tqdm(range(n_iterations), desc="MCTS Iterations", leave=False, unit="iter", ncols=100, colour="#f7fc65"):          
+            nodes = [self.roots[i].Select() for i in range(len(root_boards))]
             # selection phase
-            for i in range(len(boards_obj_list)):
+            for i in range(len(root_boards)):
                 while len(nodes[i].children) > 0:
                     nodes[i] = nodes[i].Select()
             # get the values from NN
-            boards_states = [nodes[i].board.EncodedGameStateChanged() for i in range(len(boards_obj_list))]
+            boards_states = [nodes[i].board.EncodedGameStateChanged() for i in range(len(root_boards))]
             boards_states = torch.tensor(boards_states, device=self.model.device)
             policy, value = self.model(boards_states)
             policy = policy.cpu().numpy()
             value = value.cpu().numpy()
-            for i in range(len(boards_obj_list)):
-                if boards_obj_list[i].winner!=0:
-                    if boards_obj_list[i].winner==boards_obj_list[i].player:
+            for i in range(len(root_boards)):
+                if root_boards[i].board.winner!=0:
+                    if root_boards[i].board.winner==root_boards[i].board.player:
                         nodes[i].BackPropagation(1)
-                    elif boards_obj_list[i].winner==3-boards_obj_list[i].player:
+                    elif root_boards[i].board.winner==3-root_boards[i].board.player:
                         nodes[i].BackPropagation(-1)
                 else:
                     # expansion phase
                     nodes[i].Expansion(policy[i])
                     # backprop phase
                     nodes[i].BackPropagation(value[i][0])
+
+
+        # print("\nROOT CHILDREN VISITS")
+        # for root_board in root_boards:
+        #     for child in root_board.children.values():
+        #         print(child.originMove, child.n)
+        #     print()
         
         # return the actions' probabilities for each game
         action_space_size = self.roots[0].board.size**4 if type(self.roots[0].board) == AttaxxBoard else (self.roots[0].board.size**2)+1
-        boards_actions_probs = [numpy.zeros(shape=action_space_size) for _ in range(len(boards_obj_list))]
-        for i in range(len(boards_obj_list)):
+        boards_actions_probs = [numpy.zeros(shape=action_space_size) for _ in range(len(root_boards))]
+        for i in range(len(root_boards)):
             for action, child in self.roots[i].children.items():
                 boards_actions_probs[i][action] = child.n
             boards_actions_probs[i] /= numpy.sum(boards_actions_probs[i])
