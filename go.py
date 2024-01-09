@@ -3,7 +3,6 @@ from copy import deepcopy
 
 class Group:
     def __init__(self, stone_coords, go_board):
-        self.go_board = go_board
         self.stones = set([stone_coords])
         self.possible_prisioner = False
 
@@ -18,16 +17,16 @@ class Group:
             go_board.players_groups[go_board.player].remove(neighbor_group)
         for stone in self.stones:
             go_board.group_of_stone[stone] = self
-        self.go_board.board[stone_coords] = self.go_board.player
+        go_board.board[stone_coords] = go_board.player
 
-        self.liberty_points = self.get_liberty_points()
+        self.liberty_points = self.get_liberty_points(go_board)
         self.liberties = len(self.liberty_points)
 
-    def get_liberty_points(self):
+    def get_liberty_points(self, go_board):
         liberty_pts = set()
         for (stone_i, stone_j) in self.stones:
             for (di, dj) in [(-1,0),(1,0),(0,-1),(0,1)]:
-                if (self.go_board.is_in(stone_i+di, stone_j+dj)) and (self.go_board.board[stone_i+di, stone_j+dj] == 0):
+                if (go_board.is_in(stone_i+di, stone_j+dj)) and (go_board.board[stone_i+di, stone_j+dj] == 0):
                     liberty_pts.add((stone_i+di, stone_j+dj))
         return liberty_pts
     
@@ -123,7 +122,7 @@ class GoBoard:
             if self.board[adj_stone] == self.board[played_stone] and self.group_of_stone[played_stone] not in updated_groups:
                 #player group
                 p_group = self.group_of_stone[played_stone]
-                p_group.liberty_points = p_group.get_liberty_points()
+                p_group.liberty_points = p_group.get_liberty_points(self)
                 p_group.liberties = p_group.count_liberties()
                 updated_groups.add(p_group)
             # stone of the opponent
@@ -145,7 +144,7 @@ class GoBoard:
                             self.group_of_stone[opp_stone] = None
                         # update registed player's groups
                         for p_group in p_groups_to_be_updated:
-                            p_group.liberty_points = p_group.get_liberty_points()
+                            p_group.liberty_points = p_group.get_liberty_points(self)
                             p_group.liberties = p_group.count_liberties()
                     # remove the liberty point
                     elif len(opp_group.liberty_points) > 1:

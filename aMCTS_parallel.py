@@ -26,12 +26,18 @@ class MCTS_Node:
         if len(self.children) == 0:
             return self
         
+        #print("\nNEW NODE")
         for action, child in self.children.items():
             # Calculate UCB for each children 
             if child.n == 0:
                 ucb = child.p*c*(self.n**(1/2))/(1+child.n)
             else:
-                ucb = -(child.w/child.n) + child.p*c*(self.n**(1/2))/(1+child.n)
+                ucb = 1-((child.w/child.n)+1)/2 + child.p*c*(self.n**(1/2))/(1+child.n)
+            # if child.n != 0:
+            #     print("\n", 1-((child.w/child.n)+1)/2)
+            # print(child.p*c*(self.n**(1/2))/(1+child.n))
+            # print(child.p)
+            # print()
 
             # Update max UCB value, as well as best Node
             if ucb > max_ucb: 
@@ -41,17 +47,23 @@ class MCTS_Node:
                 best_node.append(child)
         return numpy.random.choice(best_node)
 
-    def Expansion(self, policy):
+    def Expansion(self, policy:numpy.ndarray):
         if len(self.children) != 0 or self.board.winner != 0:
             return
         possibleMoves = self.board.PossibleMoves()
+        masked_normalized_policy = numpy.zeros(shape=policy.shape)
+        for move in possibleMoves:
+            action = self.board.MoveToAction(move)
+            masked_normalized_policy[action] = policy[action]
+        masked_normalized_policy /= numpy.sum(masked_normalized_policy)
+
         for move in possibleMoves:
             cur_board = self.board.copy()
             cur_board.Move(move)
             action = cur_board.MoveToAction(move)
             cur_board.NextPlayer()
             cur_board.CheckFinish()
-            self.children[action] = MCTS_Node(cur_board, self, move, policy_value=policy[action])
+            self.children[action] = MCTS_Node(cur_board, self, move, policy_value=masked_normalized_policy[action])
 
     def BackPropagation(self, value):
         self.w += value
@@ -105,7 +117,7 @@ class MCTSParallel:
                     # expansion phase
                     nodes[i].Expansion(policy[i])
                     # backprop phase
-                    nodes[i].BackPropagation(value[i][0])
+                    nodes[i].BackPropagation(value[i][0].item())
 
 
         # print("\nROOT CHILDREN VISITS")
