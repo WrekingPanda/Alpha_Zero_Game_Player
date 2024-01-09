@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 board = AttaxxBoard(4)
 board.Start()
 model = Net(4,4**4,10,128)
-#model.load_state_dict(torch.load("A4_0.pt", map_location="cuda" if torch.cuda.is_available() else "cpu"))
+model.load_state_dict(torch.load("A4_0.pt", map_location="cuda" if torch.cuda.is_available() else "cpu"))
 model.eval()
 mcts = MCTSParallel(model)
 
@@ -29,12 +29,12 @@ while True:
 
     else:
         roots = [MCTS_Node(board)]
-        mcts_probs = mcts.Search(roots, 50)
+        mcts_probs = mcts.Search(roots, 200, test=True)
 
         print("\nROOT CHILDREN VISITS")
         for root_board in roots:
             for child in root_board.children.values():
-                print(child.originMove, child.n)
+                print(child.originMove, child.n, child.p)
             print()
 
         for i in range(len(mcts_probs)):
