@@ -79,7 +79,7 @@ class MCTSParallel:
         self.roots = []
 
     @torch.no_grad()
-    def Search(self, root_boards:list[MCTS_Node], n_iterations, dirichlet_eps=0.25, init_temp=None, test = False):
+    def Search(self, root_boards:list[MCTS_Node], n_iterations, test = False):
         self.roots = root_boards
 
         # add noise to the roots' policy array

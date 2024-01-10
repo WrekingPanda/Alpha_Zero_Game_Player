@@ -41,12 +41,12 @@ def transformations(board_state, action_probs, outcome, gameType):
     return []
 
 
-# function that applies temperature to the given probabilities distribution and normalizes the result, for the current amount of plays made
-def probs_with_temperature(probabilities, plays_count, board_size):
-    # returns a vale between 4 and 1/4
-    def temperature_function(plays_count, board_size):
-        return 3.75 / (np.e**(0.5*plays_count - board_size)) + 0.25
-    prob_temp =  probabilities**(1/temperature_function(plays_count, board_size))
+# function that applies temperature to the given probabilities distribution and normalizes the result, for the current AlphaZero iteration
+def probs_with_temperature(probabilities, az_iteration):
+    # returns a vale between 1.25 and 0.75
+    def temperature_function(az_iter):
+        return 0.5 / (1 + np.e**(az_iter-5)) + 0.75
+    prob_temp =  probabilities**(1/temperature_function(az_iteration))
     prob_temp /= np.sum(prob_temp)
     return prob_temp
 
@@ -84,7 +84,7 @@ class AlphaZeroParallel2:
             for i in range(len(boards))[::-1]:
                 action_probs = boards_actions_probs[i]
                 # apply temperature
-                # action_probs = probs_with_temperature(action_probs, boards_play_count[i], self.board.size)
+                action_probs = probs_with_temperature(action_probs, az_iteration)
                 boards_dataset[i].append((boards[i].copy(), action_probs, boards[i].player))
                 moves = list(range(len(action_probs)))
                 action = np.random.choice(moves, p=action_probs)
