@@ -99,10 +99,10 @@ class MCTSParallel:
                 noise = numpy.random.normal(0,0.01,len(masked_normalized_policy))
                 policy[i] = numpy.abs(masked_normalized_policy+noise)
             self.roots[i].Expansion(policy[i])
-            self.roots[i].n = 1
+            self.roots[i].n += 1
 
         # start MCTS iterations
-        for _ in tqdm(range(n_iterations), desc="MCTS Iterations", leave=False, unit="iter", ncols=100, colour="#f7fc65"):          
+        for _ in tqdm(range(n_iterations - min([root.n for root in self.roots]) + 1), desc="MCTS Iterations", leave=False, unit="iter", ncols=100, colour="#f7fc65"):          
             nodes = [self.roots[i].Select() for i in range(len(root_boards))]
             # selection phase
             for i in range(len(root_boards)):

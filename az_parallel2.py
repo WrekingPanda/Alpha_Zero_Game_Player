@@ -40,6 +40,17 @@ def transformations(board_state, action_probs, outcome, gameType):
         return transf
     return []
 
+
+# function that applies temperature to the given probabilities distribution and normalizes the result, for the current amount of plays made
+def probs_with_temperature(probabilities, plays_count, board_size):
+    # returns a vale between 4 and 1/4
+    def temperature_function(plays_count, board_size):
+        return 3.75 / (np.e**(0.5*plays_count - board_size)) + 0.25
+    prob_temp =  probabilities**(1/temperature_function(plays_count, board_size))
+    prob_temp /= np.sum(prob_temp)
+    return prob_temp
+
+
 class AlphaZeroParallel2:
     # params = {n_iterations=10, self_play_iterations=10, mcts_iterations=100, n_epochs=10}
     def __init__(self, model, optimizer, board, gameType, data_augmentation=False, verbose=False, **params):
@@ -56,6 +67,7 @@ class AlphaZeroParallel2:
         selfplays_done = 0
         boards = [None for _ in range(self.params["n_self_play_parallel"])]
         boards_dataset = [[] for _ in range(self.params["n_self_play_parallel"])]
+        boards_play_count = [0 for _ in range(self.params["n_self_play_parallel"])]
         for i in range(self.params["n_self_play_parallel"]):
             boards[i] = AttaxxBoard(self.board.size) if self.gameType == "A" else GoBoard(self.board.size)
             boards[i].Start(render=False)
@@ -72,6 +84,8 @@ class AlphaZeroParallel2:
             boards_actions_probs = self.mcts.Search(root_boards, self.params["mcts_iterations"])
             for i in range(len(boards))[::-1]:
                 action_probs = boards_actions_probs[i]
+                # apply temperature
+                # action_probs = probs_with_temperature(action_probs, boards_play_count[i], self.board.size)
                 boards_dataset[i].append((boards[i].copy(), action_probs, boards[i].player))
                 moves = list(range(len(action_probs)))
                 action = np.random.choice(moves, p=action_probs)
@@ -79,6 +93,7 @@ class AlphaZeroParallel2:
                 boards[i].Move(move)
                 boards[i].NextPlayer()
                 boards[i].CheckFinish()
+                boards_play_count[i] += 1
 
                 # if i == 0:
                 #     print("\nFIRST BOARD GAME")
@@ -107,11 +122,13 @@ class AlphaZeroParallel2:
                     if selfplays_done >= self.params["self_play_iterations"] - self.params["n_self_play_parallel"]:
                         del boards[i]
                         del root_boards[i]
+                        del boards_play_count[i]
                     else:
                         boards[i] = AttaxxBoard(self.board.size) if self.gameType == "A" else GoBoard(self.board.size)
                         boards[i].Start(render=False)
                         root_boards[i] = MCTS_Node(boards[i])
                         boards_dataset[i] = []
+                        boards_play_count[i] = 0
 
         print("\nSELFPLAY: 100 %")
         return return_dataset
