@@ -18,7 +18,6 @@ from model_params import MODEL_PARAMS
 GAME = "A4" # A4 - A5 - A6 - G7 - G9
 
 def load_model(game_type="A", game_size=4, model_load_path=None):
-    params = tuple()
     model = Net(**MODEL_PARAMS.get(game_type+str(game_size)))
     if model_load_path != "":
         model.load_state_dict(torch.load(model_load_path, map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu")))
