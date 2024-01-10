@@ -95,15 +95,15 @@ def show_piece_place():
     x, y = pygame.mouse.get_pos()
     j = (x - SCREEN_PADDING) // CELL_LENGTH
     i = (y - SCREEN_PADDING) // CELL_LENGTH
-    # if index out of the grid index boundary, return (None, None)
-    if is_in_grid(i, j) and GRID[i][j] == 0:
-        piece_center_x = SCREEN_PADDING + j*CELL_LENGTH + CELL_LENGTH//2
-        piece_center_y = SCREEN_PADDING + i*CELL_LENGTH + CELL_LENGTH//2
-        pygame.draw.circle(
-            surface=SCREEN, color=GREY,
-            center=(piece_center_x, piece_center_y), radius=PIECE_RADIUS,
-            width=GRID_LINES_WIDTH
-        )
+    for di, dj in [(-1,-1), (-1,0), (-1,1), (0,-1), (0,0), (0,1), (1,-1), (1,0), (1,1)]:
+        if is_in_grid(i+di, j+dj) and GRID[i+di][j+dj] == 0:
+            piece_center_x = SCREEN_PADDING + (j+dj)*CELL_LENGTH + CELL_LENGTH//2
+            piece_center_y = SCREEN_PADDING + (i+di)*CELL_LENGTH + CELL_LENGTH//2
+            pygame.draw.circle(
+                surface=SCREEN, color=GREY if (di,dj)==(0,0) else BG_COLOR,
+                center=(piece_center_x, piece_center_y), radius=PIECE_RADIUS,
+                width=GRID_LINES_WIDTH
+            )
 
 
 def draw_go_board():
@@ -177,7 +177,6 @@ def piece_index_click():
                 if not all(map(lambda index: 0 <= index and index < GRID.shape[0], [i, j])):
                     return -1, -1
                 return i, j
-        draw_board(GRID)
         show_piece_place()
         pygame.display.flip()
 
