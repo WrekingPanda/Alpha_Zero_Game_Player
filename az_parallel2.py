@@ -62,12 +62,11 @@ class AlphaZeroParallel2:
         self.data_augmentation = data_augmentation
         self.verbose = verbose
 
-    def SelfPlay(self):
+    def SelfPlay(self, az_iteration):
         return_dataset = []
         selfplays_done = 0
         boards = [None for _ in range(self.params["n_self_play_parallel"])]
         boards_dataset = [[] for _ in range(self.params["n_self_play_parallel"])]
-        boards_play_count = [0 for _ in range(self.params["n_self_play_parallel"])]
         for i in range(self.params["n_self_play_parallel"]):
             boards[i] = AttaxxBoard(self.board.size) if self.gameType == "A" else GoBoard(self.board.size)
             boards[i].Start(render=False)
@@ -93,7 +92,6 @@ class AlphaZeroParallel2:
                 boards[i].Move(move)
                 boards[i].NextPlayer()
                 boards[i].CheckFinish()
-                boards_play_count[i] += 1
 
                 # if i == 0:
                 #     print("\nFIRST BOARD GAME")
@@ -122,13 +120,11 @@ class AlphaZeroParallel2:
                     if selfplays_done >= self.params["self_play_iterations"] - self.params["n_self_play_parallel"]:
                         del boards[i]
                         del root_boards[i]
-                        del boards_play_count[i]
                     else:
                         boards[i] = AttaxxBoard(self.board.size) if self.gameType == "A" else GoBoard(self.board.size)
                         boards[i].Start(render=False)
                         root_boards[i] = MCTS_Node(boards[i])
                         boards_dataset[i] = []
-                        boards_play_count[i] = 0
 
         print("\nSELFPLAY: 100 %")
         return return_dataset
@@ -156,13 +152,13 @@ class AlphaZeroParallel2:
 
 
     def Learn(self):
-        for iteration in tqdm(range(self.params["n_iterations"]), desc="AlphaZero Algorithm Iterations", leave=False, unit="iter", ncols=100, colour="#fc6a65"):
+        for az_iteration in tqdm(range(self.params["n_iterations"]), desc="AlphaZero Algorithm Iterations", leave=False, unit="iter", ncols=100, colour="#fc6a65"):
             self.model.eval()
-            dataset = self.SelfPlay()
+            dataset = self.SelfPlay(az_iteration)
             
             self.model.train()
             for epoch in tqdm(range(self.params["n_epochs"]), desc="Training Model", leave=False, unit="epoch", ncols=100, colour="#9ffc65"):
                 self.Train(dataset)
             
-            torch.save(self.model.state_dict(), f"./Models/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{iteration}.pt")
-            torch.save(self.optimizer.state_dict(), f"./Optimizers/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{iteration}_opt.pt")
+            torch.save(self.model.state_dict(), f"./Models/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{az_iteration}.pt")
+            torch.save(self.optimizer.state_dict(), f"./Optimizers/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{az_iteration}_opt.pt")

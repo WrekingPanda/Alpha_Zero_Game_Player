@@ -65,10 +65,12 @@ class MCTS_Node:
             self.children[action] = MCTS_Node(cur_board, self, move, policy_value=masked_normalized_policy[action])
 
     def BackPropagation(self, value):
-        self.w += value
-        self.n += 1
-        if self.parent is not None:
-            self.parent.BackPropagation(-1*value)
+        cur = self
+        while cur is not None:
+            cur.w += value
+            cur.n += 1
+            value *= -1
+            cur = cur.parent
 
 
 class MCTSParallel:
