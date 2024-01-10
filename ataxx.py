@@ -94,7 +94,7 @@ class AttaxxBoard:
     def NextPlayer(self):
         self.player = 3-self.player
 
-    def Fill(self,render=False):
+    def Fill(self, render=False):
         for i in range(self.size):
             for j in range(self.size):
                 if self.board[i][j] == 0:
