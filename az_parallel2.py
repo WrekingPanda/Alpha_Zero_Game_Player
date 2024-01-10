@@ -45,7 +45,7 @@ def transformations(board_state, action_probs, outcome, gameType):
 def probs_with_temperature(probabilities, az_iteration):
     # returns a vale between 1.25 and 0.75
     def temperature_function(az_iter):
-        return 0.5 / (1 + np.e**(az_iter-5)) + 0.75
+        return 1 / (1 + np.e**(az_iter-5)) + 0.5
     prob_temp =  probabilities**(1/temperature_function(az_iteration))
     prob_temp /= np.sum(prob_temp)
     return prob_temp
@@ -83,8 +83,11 @@ class AlphaZeroParallel2:
             boards_actions_probs = self.mcts.Search(root_boards, self.params["mcts_iterations"])
             for i in range(len(boards))[::-1]:
                 action_probs = boards_actions_probs[i]
+                #print("\nACTION PROBS GAME", i)
+                #print(action_probs)
+                #print()
                 # apply temperature
-                action_probs = probs_with_temperature(action_probs, az_iteration)
+                #action_probs = probs_with_temperature(action_probs, az_iteration)
                 boards_dataset[i].append((boards[i].copy(), action_probs, boards[i].player))
                 moves = list(range(len(action_probs)))
                 action = np.random.choice(moves, p=action_probs)
