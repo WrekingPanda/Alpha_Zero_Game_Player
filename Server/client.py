@@ -54,6 +54,7 @@ def connect_to_server(host='localhost', port=12345):
 
     # the model is loaded here
     # model = ...
+    """ ^^^^^^^^^^^^ """
     
     while True:
         if ag == current_agent:
@@ -69,17 +70,12 @@ def connect_to_server(host='localhost', port=12345):
                 current_agent = 3-current_agent
                 reset_time = True
                 continue
-            
-            # get move to perform
-            # this is where the predicition of the model should be interegrated
-            # the model should expect the input to be a bidimensional numpy array
-            # in this implementation, both structures holding the configuration of the Ataxx and Go boards are done using numpy arrays
-            # the model's output will have to be formatted such that if follows the structure "MOVE row_index,column_index" (Go games) or "MOVE from_row_index,from_column_index to_row_index,to_column_index" (Ataxx games)
-            # it is strongly suggested to warn the students that a method .get_move_to_play(input: board configuration in numpy array) should be implemented in their models that performs the necessary formatation to text the server
-            # move = model.get_move_to_play(input=board.board)
-            
+        
             # as a placeholder, the server will receive the move to be performed directly through the standard input
+            # GOTTA CHANGE HERE TO GET THE ACTION TO PERFORM FROM THE MODEL + MCTS
             move = input()
+            """ ^^^^^^^^^^^^ """
+
             client_socket.send(move.encode())
             print("Send:", move)
         
