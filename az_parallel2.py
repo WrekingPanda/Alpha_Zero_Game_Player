@@ -67,6 +67,7 @@ class AlphaZeroParallel2:
         selfplays_done = 0
         boards = [None for _ in range(self.params["n_self_play_parallel"])]
         boards_dataset = [[] for _ in range(self.params["n_self_play_parallel"])]
+        boards_play_count = [0 for _ in range(self.params["n_self_play_parallel"])]
         for i in range(self.params["n_self_play_parallel"]):
             boards[i] = AttaxxBoard(self.board.size) if self.gameType == "A" else GoBoard(self.board.size)
             boards[i].Start(render=False)
@@ -95,6 +96,7 @@ class AlphaZeroParallel2:
                 boards[i].Move(move)
                 boards[i].NextPlayer()
                 boards[i].CheckFinish()
+                boards_play_count[i] += 1
 
                 # if i == 0:
                 #     print("\nFIRST BOARD GAME")
@@ -103,14 +105,21 @@ class AlphaZeroParallel2:
                 # update the new root (root is now the played child state)
                 root_boards[i] = self.mcts.roots[i].children[action]
                 root_boards[i].parent = None # it is needed to "remove" / "delete" the parent state
-
+                
+                if boards_play_count[i]>= self.params["move_cap"] and boards[i].winner == 0:
+                    boards[i].winner = 3
                 if boards[i].hasFinished():
                     boards_dataset[i].append((boards[i].copy(), action_probs, boards[i].player)) # add the final config
                     boards[i].NextPlayer()
                     boards_dataset[i].append((boards[i].copy(), action_probs, boards[i].player))
 
                     for board, action_probs, player in boards_dataset[i]:
-                        outcome = 1 if player==boards[i].winner else -1
+                        if player==boards[i].winner:
+                            outcome = 1
+                        elif 3-player==boards[i].winner:
+                            outcome=-1
+                        else:
+                            outcome=0
                         return_dataset.append((board.EncodedGameStateChanged(), action_probs, outcome))
                         # data augmentation process (rotating and flipping the board)
                         if self.data_augmentation:
@@ -123,11 +132,13 @@ class AlphaZeroParallel2:
                     if selfplays_done >= self.params["self_play_iterations"] - self.params["n_self_play_parallel"]:
                         del boards[i]
                         del root_boards[i]
+                        del boards_play_count[i]
                     else:
                         boards[i] = AttaxxBoard(self.board.size) if self.gameType == "A" else GoBoard(self.board.size)
                         boards[i].Start(render=False)
                         root_boards[i] = MCTS_Node(boards[i])
                         boards_dataset[i] = []
+                        boards_play_count[i] = 0
 
         print("\nSELFPLAY: 100 %")
         return return_dataset
@@ -147,7 +158,9 @@ class AlphaZeroParallel2:
             out_policy, out_value = self.model(board_encoded)
             policy_loss = F.cross_entropy(out_policy, policy_targets)
             value_loss = F.mse_loss(out_value, value_targets)
-            loss = policy_loss + value_loss
+            
+            loss = policy_loss*2 + value_loss
+
 
             self.optimizer.zero_grad()
             loss.backward()

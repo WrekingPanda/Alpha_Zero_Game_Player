@@ -4,7 +4,7 @@ from ataxx import AttaxxBoard
 from torch.optim import Adam
 
 A5_MODEL_PARAMS = {"size":5, "action_size":5**4, "num_resBlocks":10, "num_hidden":64} 
-A5_TRAIN_PARAMS = {"n_iterations":10, "self_play_iterations":100, "mcts_iterations":150, "n_epochs":20, "batch_size":128, "n_self_play_parallel":20}
+A5_TRAIN_PARAMS = {"n_iterations":10, "self_play_iterations":100, "mcts_iterations":150, "n_epochs":20, "batch_size":128, "n_self_play_parallel":20, "move_cap":5**3}
 
 def train():
     model = Net(**A5_MODEL_PARAMS)
