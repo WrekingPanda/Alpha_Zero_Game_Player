@@ -10,8 +10,8 @@ warnings.filterwarnings("ignore")
 
 board = AttaxxBoard(4)
 board.Start()
-model = Net(4,4**4,10,64)
-model.load_state_dict(torch.load("A4_19_no_temp.pt", map_location="cuda" if torch.cuda.is_available() else "cpu"))
+model = Net(4,4**4,10,32)
+model.load_state_dict(torch.load("A4_19.pt", map_location="cuda" if torch.cuda.is_available() else "cpu"))
 model.eval()
 mcts = MCTSParallel(model)
 

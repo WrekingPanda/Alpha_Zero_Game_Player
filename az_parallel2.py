@@ -159,8 +159,7 @@ class AlphaZeroParallel2:
             policy_loss = F.cross_entropy(out_policy, policy_targets)
             value_loss = F.mse_loss(out_value, value_targets)
             
-            loss = policy_loss*2 + value_loss
-
+            loss = policy_loss*0.1 + value_loss
 
             self.optimizer.zero_grad()
             loss.backward()
