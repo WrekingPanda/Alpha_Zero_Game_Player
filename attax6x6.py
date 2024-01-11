@@ -10,7 +10,7 @@ def train():
     model = Net(**A6_MODEL_PARAMS)
     board = AttaxxBoard(6)
     optimizer = Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
-    Alpha = AlphaZeroParallel2(model, optimizer, board, 'A', data_augmentation=False, **A6_TRAIN_PARAMS)
+    Alpha = AlphaZeroParallel2(model, optimizer, board, 'A', data_augmentation=True, **A6_TRAIN_PARAMS)
     Alpha.Learn()
 
 train()
