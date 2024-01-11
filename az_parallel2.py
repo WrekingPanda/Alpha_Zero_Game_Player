@@ -88,6 +88,10 @@ class AlphaZeroParallel2:
         for i in range(self.params["n_self_play_parallel"]):
             boards[i] = AttaxxBoard(size) if self.gameType == "A" else GoBoard(size)
             boards[i].Start(render=False)
+            if (self.fill_size!=0):
+                size-=1
+        if self.fill_size!=0:
+            size = self.fill_size
 
         self.mcts = MCTSParallel(self.model, fill_size = self.fill_size)
         root_boards = [MCTS_Node(board, fill_size=self.fill_size) for board in boards]
@@ -151,9 +155,11 @@ class AlphaZeroParallel2:
                         del root_boards[i]
                         del boards_play_count[i]
                     else:
-                        if selfplays_done%(self.params["self_play_iterations"]/(self.fill_size-3)) == 0 and self.fill_size!=0:
-                            size-=1
-                            print("NEW BOARD SIZE: "+str(size))
+                        if self.fill_size!=0:
+                            if selfplays_done%(self.fill_size-3) == 0:
+                                size-=self.fill_size
+                            else:
+                                size-=1
                         boards[i] = AttaxxBoard(size) if self.gameType == "A" else GoBoard(size)
                         boards[i].Start(render=False)
                         root_boards[i] = MCTS_Node(boards[i], fill_size=self.fill_size)
