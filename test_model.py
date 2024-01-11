@@ -7,13 +7,16 @@ import numpy as np
 
 import warnings
 warnings.filterwarnings("ignore")
-
-board = AttaxxBoard(4)
+FILL_SIZE = 0
+board = AttaxxBoard(5)
 board.Start()
-model = Net(4,4**4,10,32)
-model.load_state_dict(torch.load("A4_19.pt", map_location="cuda" if torch.cuda.is_available() else "cpu"))
+if FILL_SIZE!=0:
+    model = Net(FILL_SIZE,FILL_SIZE**4,10,32)
+else:
+    model = Net(4,4**4,10,32)
+model.load_state_dict(torch.load("AFlex_1.pt", map_location="cuda" if torch.cuda.is_available() else "cpu"))
 model.eval()
-mcts = MCTSParallel(model)
+mcts = MCTSParallel(model,fill_size= FILL_SIZE)
 
 while True:
     print(board.board)
@@ -28,7 +31,7 @@ while True:
             print("NOT A VALID MOVE")
 
     else:
-        roots = [MCTS_Node(board)]
+        roots = [MCTS_Node(board,fill_size= FILL_SIZE)]
         mcts_probs = mcts.Search(roots, 200, test=True)
 
         print("\nROOT CHILDREN VISITS")

@@ -9,7 +9,7 @@ from tqdm.notebook import tqdm
 
 
 class MCTS_Node:
-    def __init__(self, board, parent=None, move=None, policy_value=0) -> None:
+    def __init__(self, board, parent=None, move=None, policy_value=0, fill_size = 0) -> None:
         self.board = board
         self.w = 0 # Sum of backpropagation 
         self.n = 0 # Num of visits
@@ -18,6 +18,7 @@ class MCTS_Node:
         self.originMove = move
         self.parent = parent
         self.children = {} # Save all children 
+        self.fill_size  = fill_size
 
     def Select(self):
         c = 2
@@ -49,7 +50,7 @@ class MCTS_Node:
         masked_normalized_policy = numpy.zeros(shape=policy.shape)
         
         for move in possibleMoves:
-            action = self.board.MoveToAction(move)
+            action = self.board.MoveToAction(move, self.fill_size)
             masked_normalized_policy[action] = policy[action]
         if numpy.sum(masked_normalized_policy) != 0 and not numpy.isnan(numpy.sum(masked_normalized_policy)):
             masked_normalized_policy /= numpy.sum(masked_normalized_policy)
@@ -62,7 +63,7 @@ class MCTS_Node:
             action = cur_board.MoveToAction(move)
             cur_board.NextPlayer()
             cur_board.CheckFinish()
-            self.children[action] = MCTS_Node(cur_board, self, move, policy_value=masked_normalized_policy[action])
+            self.children[action] = MCTS_Node(cur_board, self, move, policy_value=masked_normalized_policy[action], fill_size=self.fill_size)
 
     def BackPropagation(self, value):
         cur = self
@@ -74,21 +75,25 @@ class MCTS_Node:
 
 
 class MCTSParallel:
-    def __init__(self, model) -> None:
+    def __init__(self, model, fill_size=0) -> None:
         self.model = model
         self.roots = []
+        self.fill_size=fill_size
 
     @torch.no_grad()
     def Search(self, root_boards:list[MCTS_Node], n_iterations, test = False):
         self.roots = root_boards
 
         # add noise to the roots' policy array
-        boards_states = [root.board.EncodedGameStateChanged() for root in self.roots]
+        boards_states = [root.board.EncodedGameStateChanged(self.fill_size) for root in self.roots]
         boards_states = torch.tensor(boards_states, device=self.model.device)
         policy, _ = self.model(boards_states)
         policy = policy.cpu().numpy()
-        action_space_size = self.roots[0].board.size**4 if type(self.roots[0].board)==AttaxxBoard else self.roots[0].board.size**2+1
-        
+        if self.fill_size==0:
+            action_space_size = self.roots[0].board.size**4 if type(self.roots[0].board)==AttaxxBoard else self.roots[0].board.size**2+1
+        else:
+            action_space_size = self.fill_size**4
+
         # expand each root and associate the policy valyes with the ramifications
         for i in range(len(root_boards)):
             if not test:
@@ -111,7 +116,7 @@ class MCTSParallel:
                 while len(nodes[i].children) > 0:
                     nodes[i] = nodes[i].Select()
             # get the values from NN
-            boards_states = [nodes[i].board.EncodedGameStateChanged() for i in range(len(root_boards))]
+            boards_states = [nodes[i].board.EncodedGameStateChanged(self.fill_size) for i in range(len(root_boards))]
             boards_states = torch.tensor(boards_states, device=self.model.device)
             policy, value = self.model(boards_states)
             policy = policy.cpu().numpy()
@@ -138,7 +143,10 @@ class MCTSParallel:
         #     print()
         
         # return the actions' probabilities for each game
-        action_space_size = self.roots[0].board.size**4 if type(self.roots[0].board) == AttaxxBoard else (self.roots[0].board.size**2)+1
+        if self.fill_size==0:
+            action_space_size = self.roots[0].board.size**4 if type(self.roots[0].board) == AttaxxBoard else (self.roots[0].board.size**2)+1
+        else:
+            action_space_size= self.fill_size**4
         boards_actions_probs = [numpy.zeros(shape=action_space_size) for _ in range(len(root_boards))]
         for i in range(len(root_boards)):
             for action, child in self.roots[i].children.items():

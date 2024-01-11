@@ -15,7 +15,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # for the data augmentation process
-def transformations(board_state, action_probs, outcome, gameType):
+def transformations(board_state, action_probs, outcome, gameType, fill_size=0):
     if gameType == 'G':
         side = board_state.size
         transf = []
@@ -28,16 +28,28 @@ def transformations(board_state, action_probs, outcome, gameType):
         transf.append((board_state.rotate90(3).flip_vertical().EncodedGameStateChanged(), np.append(np.rot90(np.flip(np.copy(action_probs)[:-1].reshape(side,side),1),0).flatten(),action_probs[-1]), outcome)) # rotate 270 and flip vertically
         return transf
     elif gameType == 'A':
-        side = board_state.size
-        transf = []
-        transf.append((board_state.flip_vertical().EncodedGameStateChanged(), np.flip(np.flip(np.copy(action_probs).reshape(side,side,side,side),2),0).flatten(), outcome))                                                 # flip vertically
-        transf.append((board_state.rotate90(1).EncodedGameStateChanged(), np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),1,(2,3)),1,(0,1)).flatten(), outcome))                                       # rotate 90
-        transf.append((board_state.rotate90(1).flip_vertical().EncodedGameStateChanged(), np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),1,(2,3)),1,(0,1)),2),0).flatten(), outcome)) # rotate 90 and flip vertically
-        transf.append((board_state.rotate90(2).EncodedGameStateChanged(), np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),2,(2,3)),2,(0,1)).flatten(), outcome))                                       # rotate 180
-        transf.append((board_state.rotate90(2).flip_vertical().EncodedGameStateChanged(), np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),2,(2,3)),2,(0,1)),2),0).flatten(), outcome)) # rotate 180 and flip vertically
-        transf.append((board_state.rotate90(3).EncodedGameStateChanged(), np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),3,(2,3)),3,(0,1)).flatten(), outcome))                                       # rotate 270
-        transf.append((board_state.rotate90(3).flip_vertical().EncodedGameStateChanged(), np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),3,(2,3)),3,(0,1)),2),0).flatten(), outcome)) # rotate 270 and flip vertically
-        return transf
+        if fill_size==0:
+            side = board_state.size
+            transf = []
+            transf.append((board_state.flip_vertical().EncodedGameStateChanged(), np.flip(np.flip(np.copy(action_probs).reshape(side,side,side,side),2),0).flatten(), outcome))                                                 # flip vertically
+            transf.append((board_state.rotate90(1).EncodedGameStateChanged(), np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),1,(2,3)),1,(0,1)).flatten(), outcome))                                       # rotate 90
+            transf.append((board_state.rotate90(1).flip_vertical().EncodedGameStateChanged(), np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),1,(2,3)),1,(0,1)),2),0).flatten(), outcome)) # rotate 90 and flip vertically
+            transf.append((board_state.rotate90(2).EncodedGameStateChanged(), np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),2,(2,3)),2,(0,1)).flatten(), outcome))                                       # rotate 180
+            transf.append((board_state.rotate90(2).flip_vertical().EncodedGameStateChanged(), np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),2,(2,3)),2,(0,1)),2),0).flatten(), outcome)) # rotate 180 and flip vertically
+            transf.append((board_state.rotate90(3).EncodedGameStateChanged(), np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),3,(2,3)),3,(0,1)).flatten(), outcome))                                       # rotate 270
+            transf.append((board_state.rotate90(3).flip_vertical().EncodedGameStateChanged(), np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(side,side,side,side),3,(2,3)),3,(0,1)),2),0).flatten(), outcome)) # rotate 270 and flip vertically
+            return transf
+        else:
+            side = board_state.size
+            transf = []
+            transf.append((board_state.flip_vertical().EncodedGameStateChanged(fill_size), np.pad(np.flip(np.flip(np.copy(action_probs).reshape(fill_size,fill_size,fill_size,fill_size)[:side,:side,:side,:side],2),0),(0,fill_size-side),'constant',constant_values=(0)).flatten(), outcome))                                                 # flip vertically
+            transf.append((board_state.rotate90(1).EncodedGameStateChanged(fill_size),np.pad(np.rot90(np.rot90(np.copy(action_probs).reshape(fill_size,fill_size,fill_size,fill_size)[:side,:side,:side,:side],1,(2,3)),1,(0,1)),(0,fill_size-side),'constant',constant_values=(0)).flatten(), outcome))                                       # rotate 90
+            transf.append((board_state.rotate90(1).flip_vertical().EncodedGameStateChanged(fill_size), np.pad(np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(fill_size,fill_size,fill_size,fill_size)[:side,:side,:side,:side],1,(2,3)),1,(0,1)),2),0),(0,fill_size-side),'constant',constant_values=(0)).flatten(), outcome)) # rotate 90 and flip vertically
+            transf.append((board_state.rotate90(2).EncodedGameStateChanged(fill_size), np.pad(np.rot90(np.rot90(np.copy(action_probs).reshape(fill_size,fill_size,fill_size,fill_size)[:side,:side,:side,:side],2,(2,3)),2,(0,1)),(0,fill_size-side),'constant',constant_values=(0)).flatten(), outcome))                                       # rotate 180
+            transf.append((board_state.rotate90(2).flip_vertical().EncodedGameStateChanged(fill_size), np.pad(np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(fill_size,fill_size,fill_size,fill_size)[:side,:side,:side,:side],2,(2,3)),2,(0,1)),2),0),(0,fill_size-side),'constant',constant_values=(0)).flatten(), outcome)) # rotate 180 and flip vertically
+            transf.append((board_state.rotate90(3).EncodedGameStateChanged(fill_size), np.pad(np.rot90(np.rot90(np.copy(action_probs).reshape(fill_size,fill_size,fill_size,fill_size)[:side,:side,:side,:side],3,(2,3)),3,(0,1)),(0,fill_size-side),'constant',constant_values=(0)).flatten(), outcome))                                       # rotate 270
+            transf.append((board_state.rotate90(3).flip_vertical().EncodedGameStateChanged(fill_size), np.pad(np.flip(np.flip(np.rot90(np.rot90(np.copy(action_probs).reshape(fill_size,fill_size,fill_size,fill_size)[:side,:side,:side,:side],3,(2,3)),3,(0,1)),2),0),(0,fill_size-side),'constant',constant_values=(0)).flatten(), outcome)) # rotate 270 and flip vertically
+            return transf
     return []
 
 
@@ -53,7 +65,7 @@ def probs_with_temperature(probabilities, az_iteration):
 
 class AlphaZeroParallel2:
     # params = {n_iterations=10, self_play_iterations=10, mcts_iterations=100, n_epochs=10}
-    def __init__(self, model, optimizer, board, gameType, data_augmentation=False, verbose=False, **params):
+    def __init__(self, model, optimizer, board, gameType, data_augmentation=False, verbose=False, fill_size=0, **params):
         self.model = model
         self.optimizer = optimizer
         self.board = board
@@ -61,19 +73,24 @@ class AlphaZeroParallel2:
         self.params = params
         self.data_augmentation = data_augmentation
         self.verbose = verbose
+        self.fill_size = fill_size
 
     def SelfPlay(self, az_iteration):
+        if self.fill_size!=0:
+            size = self.fill_size
+        else:
+            size = self.board.size
         return_dataset = []
         selfplays_done = 0
         boards = [None for _ in range(self.params["n_self_play_parallel"])]
         boards_dataset = [[] for _ in range(self.params["n_self_play_parallel"])]
         boards_play_count = [0 for _ in range(self.params["n_self_play_parallel"])]
         for i in range(self.params["n_self_play_parallel"]):
-            boards[i] = AttaxxBoard(self.board.size) if self.gameType == "A" else GoBoard(self.board.size)
+            boards[i] = AttaxxBoard(size) if self.gameType == "A" else GoBoard(size)
             boards[i].Start(render=False)
 
-        self.mcts = MCTSParallel(self.model)
-        root_boards = [MCTS_Node(board) for board in boards]
+        self.mcts = MCTSParallel(self.model, fill_size = self.fill_size)
+        root_boards = [MCTS_Node(board, fill_size=self.fill_size) for board in boards]
         while len(boards) > 0:
 
             # print("\nINSIDE SELFPLAY")
@@ -120,10 +137,10 @@ class AlphaZeroParallel2:
                             outcome=-1
                         else:
                             outcome=0
-                        return_dataset.append((board.EncodedGameStateChanged(), action_probs, outcome))
+                        return_dataset.append((board.EncodedGameStateChanged(self.fill_size), action_probs, outcome))
                         # data augmentation process (rotating and flipping the board)
                         if self.data_augmentation:
-                            for transformed_data in transformations(board, action_probs, outcome, self.gameType):
+                            for transformed_data in transformations(board, action_probs, outcome, self.gameType, fill_size=self.fill_size ):
                                 return_dataset.append(transformed_data)
                     # dynamic parallel selfplay allocation
                     selfplays_done += 1
@@ -134,9 +151,12 @@ class AlphaZeroParallel2:
                         del root_boards[i]
                         del boards_play_count[i]
                     else:
-                        boards[i] = AttaxxBoard(self.board.size) if self.gameType == "A" else GoBoard(self.board.size)
+                        if selfplays_done%(self.params["self_play_iterations"]/(self.fill_size-3)) == 0 and self.fill_size!=0:
+                            size-=1
+                            print("NEW BOARD SIZE: "+str(size))
+                        boards[i] = AttaxxBoard(size) if self.gameType == "A" else GoBoard(size)
                         boards[i].Start(render=False)
-                        root_boards[i] = MCTS_Node(boards[i])
+                        root_boards[i] = MCTS_Node(boards[i], fill_size=self.fill_size)
                         boards_dataset[i] = []
                         boards_play_count[i] = 0
 
@@ -175,5 +195,9 @@ class AlphaZeroParallel2:
             for epoch in tqdm(range(self.params["n_epochs"]), desc="Training Model", leave=False, unit="epoch", ncols=100, colour="#9ffc65"):
                 self.Train(dataset)
             
-            torch.save(self.model.state_dict(), f"./Models/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{az_iteration}.pt")
-            torch.save(self.optimizer.state_dict(), f"./Optimizers/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{az_iteration}_opt.pt")
+            if self.fill_size==0:
+                torch.save(self.model.state_dict(), f"./Models/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{az_iteration}.pt")
+                torch.save(self.optimizer.state_dict(), f"./Optimizers/{str.upper(self.gameType)}{self.board.size}/{str.upper(self.gameType)}{self.board.size}_{az_iteration}_opt.pt")
+            else:
+                torch.save(self.model.state_dict(), f"./Models/{str.upper(self.gameType)}Flex/{str.upper(self.gameType)}Flex_{az_iteration}.pt")
+                torch.save(self.optimizer.state_dict(), f"./Optimizers/{str.upper(self.gameType)}Flex/{str.upper(self.gameType)}Flex_{az_iteration}_opt.pt")
