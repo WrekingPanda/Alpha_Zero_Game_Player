@@ -46,16 +46,14 @@ class MCTS_Node:
             return
         masked_normalized_policy = numpy.zeros(shape=policy.shape)
         possibleMoves = self.board.PossibleMoves()
-        count_possible_moves = 0
         for move in possibleMoves:
             action = self.board.MoveToAction(move, self.fill_size)
             masked_normalized_policy[action] = policy[action]
-            count_possible_moves += 1
         if numpy.sum(masked_normalized_policy) != 0 and not numpy.isnan(numpy.sum(masked_normalized_policy)):
             masked_normalized_policy /= numpy.sum(masked_normalized_policy)
         else:
             # if there is any issue with the probs
-            masked_normalized_policy = numpy.ones(len(masked_normalized_policy))/count_possible_moves
+            masked_normalized_policy = numpy.ones(len(masked_normalized_policy))/len(list(self.board.PossibleMoves()))
 
         possibleMoves = self.board.PossibleMoves()
         for move in possibleMoves:
