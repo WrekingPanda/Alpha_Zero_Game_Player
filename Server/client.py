@@ -1,22 +1,14 @@
 import socket
 import random
 import time
+import torch
+import numpy as np
 from ataxx import AttaxxBoard
 from go import GoBoard
+from CNN import Net
+from aMCTS_parallel import MCTSParallel,MCTS_Node
 
 #Game="A4x4" # "A6x6" "G7x7" "G9x9" "A5x5"
-
-def generate_random_move():
-    x = random.randint(0, 9)
-    y = random.randint(0, 9)
-    return f"MOVE {x},{y}"
-
-def generate_random_move2():
-    x = random.randint(0, 4)
-    y = random.randint(0, 4)
-    x2 = random.randint(0, 4)
-    y2 = random.randint(0, 4)
-    return f"MOVE {x},{y},{x2},{y2}"
 
 def parse_coords(data):
     data = data.split(sep=" ")
@@ -53,8 +45,21 @@ def connect_to_server(host='localhost', port=12345):
     reset_time = False
 
     # the model is loaded here
-    # model = ...
-    """ ^^^^^^^^^^^^ """
+    if game_type=="A":
+        if game_size==4:
+            model = Net(game_size,game_size**4,10,32)
+        else:
+            model = Net(game_size,game_size**4,10,64)
+    else:
+        if game_size==9:
+            model = Net(game_size,game_size**2+1,30,64)
+        else:
+            model = Net(game_size,game_size**2+1,20,64)
+    
+    file_name = game_type + "_" + str(game_size) + ".pt"
+    model.load_state_dict(torch.load(file_name, map_location="cuda" if torch.cuda.is_available() else "cpu"))
+    model.eval()
+    mcts = MCTSParallel(model)
     
     while True:
         if ag == current_agent:
@@ -71,10 +76,23 @@ def connect_to_server(host='localhost', port=12345):
                 reset_time = True
                 continue
         
-            # as a placeholder, the server will receive the move to be performed directly through the standard input
-            # GOTTA CHANGE HERE TO GET THE ACTION TO PERFORM FROM THE MODEL + MCTS
-            move = input()
-            """ ^^^^^^^^^^^^ """
+            # get the move to execute
+            roots = [MCTS_Node(board)]
+            mcts_probs = mcts.Search(roots, 200, test=True)
+
+            for root_board in roots:
+                for child in root_board.children.values():
+                    print(child.originMove, child.n, child.p)
+                print()
+
+            for i in range(len(mcts_probs)):
+                if mcts.roots[0].children.get(i):
+                    print(mcts.roots[0].children[i].originMove, mcts_probs[i])
+            action = np.argmax(mcts_probs)
+            move = mcts.roots[0].children[action].originMove
+            
+            """ purelly for testing, we can delete the following line later """
+            print("Alphazero Move:", move)
 
             client_socket.send(move.encode())
             print("Send:", move)
