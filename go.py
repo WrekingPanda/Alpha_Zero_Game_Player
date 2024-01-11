@@ -2,33 +2,25 @@ import numpy as np
 from copy import deepcopy
 
 class Group:
-    def __init__(self, stone_coords=None, go_board=None):
-        # for copy method
-        if stone_coords is None and go_board is None:
-            self.stones = set()
-            self.possible_prisioner = False
-            self.liberty_points = set()
-            self.liberties = 0
-        # usual init behaviour
-        else:
-            self.stones = set([stone_coords])
-            self.possible_prisioner = False
+    def __init__(self, stone_coords, go_board):
+        self.stones = set([stone_coords])
+        self.possible_prisioner = False
 
-            neighbor_groups = set()
-            i,j = stone_coords
-            for (di, dj) in [(-1,0),(1,0),(0,-1),(0,1)]:
-                if go_board.is_in(i+di, j+dj) and go_board.board[i+di, j+dj] == go_board.player:
-                    neighbor_groups.add(go_board.group_of_stone[(i+di, j+dj)])
-            # updates the groups
-            for neighbor_group in neighbor_groups:
-                self.stones = self.stones.union(neighbor_group.stones)
-                go_board.players_groups[go_board.player].remove(neighbor_group)
-            for stone in self.stones:
-                go_board.group_of_stone[stone] = self
-            go_board.board[stone_coords] = go_board.player
+        neighbor_groups = set()
+        i,j = stone_coords
+        for (di, dj) in [(-1,0),(1,0),(0,-1),(0,1)]:
+            if go_board.is_in(i+di, j+dj) and go_board.board[i+di, j+dj] == go_board.player:
+                neighbor_groups.add(go_board.group_of_stone[(i+di, j+dj)])
+        # updates the groups
+        for neighbor_group in neighbor_groups:
+            self.stones = self.stones.union(neighbor_group.stones)
+            go_board.players_groups[go_board.player].remove(neighbor_group)
+        for stone in self.stones:
+            go_board.group_of_stone[stone] = self
+        go_board.board[stone_coords] = go_board.player
 
-            self.liberty_points = self.get_liberty_points(go_board)
-            self.liberties = len(self.liberty_points)
+        self.liberty_points = self.get_liberty_points(go_board)
+        self.liberties = len(self.liberty_points)
 
     def get_liberty_points(self, go_board):
         liberty_pts = set()
@@ -41,19 +33,12 @@ class Group:
     def count_liberties(self):
         return len(list(self.liberty_points))
     
-    def copy(self):
-        copy = Group()
-        copy.stones = self.stones.copy()
-        copy.possible_prisioner = self.possible_prisioner
-        copy.liberty_points = self.liberty_points.copy()
-        copy.liberties = self.liberties
-        return copy
-    
     def __eq__(self, other):
         return self.stones.__eq__(other.stones)
 
     def __hash__(self):
         return object.__hash__(self)
+
 
 
 class GoBoard:
@@ -69,23 +54,7 @@ class GoBoard:
         self.winner = 0
 
     def copy(self):
-        copy = GoBoard(self.size)
-        copy.board = self.board.copy()
-        copy.player = self.player
-        copy.players_groups = {1:[], 2:[]}
-        for p in [1,2]:
-            for group in self.players_groups[p]:
-                copy.players_groups[p].append(group.copy())
-        copy.group_of_stone = {(i,j): None for j in range(self.size) for i in range(self.size)}
-        for i in range(self.size):
-            for j in range(self.size):
-                if self.group_of_stone[(i,j)] is not None:
-                    copy.group_of_stone[(i,j)] = self.group_of_stone[(i,j)].copy()
-        copy.players_prev_boards = self.players_prev_boards.copy()
-        copy.players_captured_opp_stones = self.players_captured_opp_stones.copy()
-        copy.players_last_move = self.players_last_move.copy()
-        copy.winner = self.winner
-        return copy
+        return deepcopy(self)
 
     def __eq__(self, other):
         return self.board.tolist() == other.board.tolist()
@@ -221,8 +190,8 @@ class GoBoard:
         return j + i*self.size
 
     def calculate_scores(self):
-        self_copy = self.copy()
-        board = self_copy.board.copy() # copy the board
+        self_copy = deepcopy(self)
+        board = deepcopy(self_copy.board) # copy the board
 
         def flood_fill(coords, player):
             if board[coords] == 0 or (board[coords] != 1 and board[coords] != 2): board[coords] += 10+player
@@ -235,7 +204,7 @@ class GoBoard:
         # check for possible prisioners prisioners
         for player in [self_copy.player, 3-self_copy.player]:
             for opp_group in self_copy.players_groups[3-player]:
-                board = self_copy.board.copy() # copy the board
+                board = deepcopy(self_copy.board) # copy the board
                 for stone in opp_group.stones:
                     board = flood_fill(stone, 3-player)
                 for group in self_copy.players_groups[player]:
@@ -244,7 +213,7 @@ class GoBoard:
                         group.possible_prisioner = True
         
         # remove prisioners
-        board = self_copy.board.copy() # copy the board
+        board = deepcopy(self_copy.board) # copy the board
         for player in [self_copy.player, 3-self_copy.player]:
             for opp_group in self_copy.players_groups[3-player]:
                 if opp_group.possible_prisioner:
@@ -260,7 +229,7 @@ class GoBoard:
                     self_copy.players_groups[player].remove(group)
 
         # calculate territories
-        board = self_copy.board.copy() # copy the board
+        board = deepcopy(self_copy.board) # copy the board
         for player in [3-self_copy.player, self_copy.player]:
             for group in self_copy.players_groups[player]:
                 for stone in group.stones:
@@ -282,12 +251,12 @@ class GoBoard:
     
     
     def rotate90(self, times):
-        copy = self.copy()
+        copy = deepcopy(self)
         copy.board = np.rot90(copy.board, times)
         return copy
 
     def flip_vertical(self):
-        copy = self.copy()
+        copy = deepcopy(self)
         copy.board = np.flip(copy.board, 0)
         return copy
 
