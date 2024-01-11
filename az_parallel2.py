@@ -147,24 +147,24 @@ class AlphaZeroParallel2:
                             for transformed_data in transformations(board, action_probs, outcome, self.gameType, fill_size=self.fill_size ):
                                 return_dataset.append(transformed_data)
                     # dynamic parallel selfplay allocation
-                    selfplays_done += 1
-                    if selfplays_done % self.params["n_self_play_parallel"] == 0:
-                        print("\nSELFPLAY:", selfplays_done * 100 // self.params["self_play_iterations"], "%")
                     if selfplays_done >= self.params["self_play_iterations"] - self.params["n_self_play_parallel"]:
                         del boards[i]
                         del root_boards[i]
                         del boards_play_count[i]
                     else:
-                        if self.fill_size!=0:
-                            if selfplays_done%(self.fill_size-3) == 0:
-                                size-=self.fill_size
-                            else:
-                                size-=1
                         boards[i] = AttaxxBoard(size) if self.gameType == "A" else GoBoard(size)
                         boards[i].Start(render=False)
                         root_boards[i] = MCTS_Node(boards[i], fill_size=self.fill_size)
                         boards_dataset[i] = []
                         boards_play_count[i] = 0
+                        if self.fill_size!=0:
+                            if (selfplays_done+1)%(self.fill_size-3) == 0:
+                                size=self.fill_size
+                            else:
+                                size-=1
+                    selfplays_done += 1
+                    if selfplays_done % self.params["n_self_play_parallel"] == 0:
+                        print("\nSELFPLAY:", selfplays_done * 100 // self.params["self_play_iterations"], "%")
 
         print("\nSELFPLAY: 100 %")
         return return_dataset
