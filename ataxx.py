@@ -162,7 +162,7 @@ class AttaxxBoard:
             return best,value
     
     def CheckFinish(self, render=False):
-        if (len(self.PossibleMoves())) == 0:
+        if (len(list(self.PossibleMoves()))) == 0:
             self.Fill(render)
             c1,c2 = self.PieceCount()
             if c1 > c2:
