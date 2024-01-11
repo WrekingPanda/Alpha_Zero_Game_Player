@@ -1,7 +1,7 @@
 import numpy as np
 from aMCTS_parallel import MCTSParallel, MCTS_Node
 from ataxx import AttaxxBoard
-from go import GoBoard
+from fastgo import GoBoard
 
 import random
 #from tqdm import tqdm

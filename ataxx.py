@@ -39,15 +39,16 @@ class AttaxxBoard:
         print()
 
     def PossibleMoves(self):
-        moves = []
+        #moves = []
         for row in range(self.size):
             for col in range(self.size):
                 if self.board[row][col] == self.player:
                     for nextRow in range(row-2,row+3):
                         for nextCol in range(col-2,col+3):
                             if self.ValidMove(row,col,nextRow,nextCol):
-                                moves.append((row,col,nextRow,nextCol))
-        return moves
+                                yield (row,col,nextRow,nextCol)
+                                #moves.append((row,col,nextRow,nextCol))
+        #return moves
     
     def MoveToAction(self, move, fill_size=0):
         if fill_size==0 or fill_size==self.size:

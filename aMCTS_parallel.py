@@ -1,12 +1,11 @@
 import numpy 
 from ataxx import AttaxxBoard
-from go import GoBoard
+from fastgo import GoBoard
 import torch
 torch.manual_seed(0)
 
 #from tqdm import tqdm
 from tqdm.notebook import tqdm
-
 
 class MCTS_Node:
     def __init__(self, board, parent=None, move=None, policy_value=0, fill_size = 0) -> None:
@@ -33,7 +32,6 @@ class MCTS_Node:
             else:
                 ucb = -(child.w/child.n) + child.p*c*(self.n**(1/2))/(1+child.n)
 
-
             # Update max UCB value, as well as best Node
             if ucb > max_ucb: 
                 max_ucb = ucb
@@ -46,9 +44,8 @@ class MCTS_Node:
     def Expansion(self, policy:numpy.ndarray):
         if len(self.children) != 0 or self.board.winner != 0:
             return
-        possibleMoves = self.board.PossibleMoves()
         masked_normalized_policy = numpy.zeros(shape=policy.shape)
-        
+        possibleMoves = self.board.PossibleMoves()
         for move in possibleMoves:
             action = self.board.MoveToAction(move, self.fill_size)
             masked_normalized_policy[action] = policy[action]
@@ -57,6 +54,8 @@ class MCTS_Node:
         else:
             # if there is any issue with the probs
             masked_normalized_policy = numpy.ones(len(masked_normalized_policy))/len(possibleMoves)
+
+        possibleMoves = self.board.PossibleMoves()
         for move in possibleMoves:
             cur_board = self.board.copy()
             cur_board.Move(move)
@@ -134,7 +133,6 @@ class MCTSParallel:
                     nodes[i].Expansion(policy[i])
                     # backprop phase
                     nodes[i].BackPropagation(value[i][0].item())
-
 
         # print("\nROOT CHILDREN VISITS")
         # for root_board in root_boards:
