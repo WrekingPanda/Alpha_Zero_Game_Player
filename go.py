@@ -282,10 +282,14 @@ class GoBoard:
     
     
     def rotate90(self, times):
-        return np.rot90(self.board, times)
+        copy = self.copy()
+        copy.board = np.rot90(copy.board, times)
+        return copy
 
     def flip_vertical(self):
-        return np.flip(self.board, 0)
+        copy = self.copy()
+        copy.board = np.flip(copy.board, 0)
+        return copy
 
     def EncodedGameState(self):
         encoded_state = np.stack(
