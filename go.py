@@ -204,7 +204,7 @@ class GoBoard:
             self.winner = 1 if scores[1] > scores[2] else 2
 
     # Check if the game has finished
-    def CheckFinish(self):
+    def CheckFinish(self, render=False):
         if (self.players_last_move[1] == (-1,-1) and self.players_last_move[2] == (-1,-1)):
             scores = self.CalculateScores()
             if scores[1] > scores[2]: 
@@ -323,8 +323,51 @@ class GoBoard:
             (self.board == self.player, self.board == 3-self.player, self.board == 0)
         ).astype(np.float32)
         return encoded_state
+    
+    def score(self, player):
+        # Calculate the score difference between players
+        points = self.CalculateScores()
+        if player == 1:
+            return points[1] - points[2]
+        return points[2] - points[1]
 
-
+    def minimax(self, depth, max_player, alpha, beta, player):
+        # Minimax algorithm with alpha-beta pruning for finding the best move
+        self.CheckFinish()
+        if self.winner == player:
+            return None, 10000
+        if self.winner == 3 - player:
+            return None, -10000
+        if depth == 0:
+            return None, self.score(player)
+        if max_player:
+            value = -np.inf
+            for move in self.PossibleMoves():
+                copy = self.copy()
+                copy.Move(move)
+                copy.NextPlayer()
+                new = copy.minimax(depth - 1, False, alpha, beta, player)[1]
+                if new > value:
+                    value = new
+                    best = move
+                if value >= beta:
+                    break
+                alpha = max(alpha, value)
+            return best, value
+        else:
+            value = np.inf
+            for move in self.PossibleMoves():
+                copy = self.copy()
+                copy.Move(move)
+                copy.NextPlayer()
+                new = copy.minimax(depth - 1, True, alpha, beta, player)[1]
+                if new < value:
+                    value = new
+                    best = move
+                if value <= alpha:
+                    break
+                beta = min(beta, value)
+            return best, value
 
 def GameLoop():
     # Initialize Go board with dimension 9
