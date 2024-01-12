@@ -304,17 +304,20 @@ class GoBoard:
         copy.board = np.rot90(copy.board, times)
         return copy
     
+    # Flip the board vertically
     def flip_vertical(self):
         copy = deepcopy(self)
         copy.board = np.flip(copy.board, 0)
         return copy
 
+    # Encode the current game state for input to a neural network
     def EncodedGameState(self):
         encoded_state = np.stack(
             (self.board == 1, self.board == 2, self.board == 0)
         ).astype(np.float32)
         return encoded_state
     
+    # Encode the game state depending on the current player for input to a neural network
     def EncodedGameStateChanged(self, fill_size=0):
         encoded_state = np.stack(
             (self.board == self.player, self.board == 3-self.player, self.board == 0)
