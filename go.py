@@ -155,7 +155,8 @@ class GoBoard:
             for j in range(self.size):
                 if self.ValidMove(i, j):
                     yield (i, j)
-        yield (-1, -1)
+        if np.sum(self.board == 0) < self.size**2 // 4:
+            yield (-1, -1)
 
     def MoveToAction(self, move, fill_size=0):
         # Convert a move to an action index
