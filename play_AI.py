@@ -10,12 +10,12 @@ warnings.filterwarnings("ignore")
 
 import graphics
 from ataxx import AttaxxBoard
-from go import GoBoard
+from fastgo import GoBoard
 from CNN import Net
 from aMCTS_parallel import MCTSParallel, MCTS_Node
 from model_params import MODEL_PARAMS
 
-GAME = "A4" # A4 - A5 - A6 - G7 - G9
+GAME = "A5" # A4 - A5 - A6 - G7 - G9
 
 def load_model(game_type="A", game_size=4, model_load_path=None):
     model = Net(**MODEL_PARAMS.get(game_type+str(game_size)))
@@ -67,7 +67,7 @@ def play_game(game_type="A", game_size=4, human_player=1, model_load_path="", mc
                     else:
                         selected = True
             elif game_type == "G":
-                move = list(graphics.piece_index_click())
+                move = tuple(graphics.piece_index_click())
 
             if board.ValidMove(*move):
                 board.Move(move)
@@ -103,4 +103,4 @@ def play_game(game_type="A", game_size=4, human_player=1, model_load_path="", mc
             break
 
 if __name__ == "__main__":
-    play_game("A", 4, human_player=1, model_load_path="...", mcts_iterations=200, render=True)
+    play_game("A", 5, human_player=2, model_load_path="A5.pt", mcts_iterations=200, render=True)
