@@ -160,12 +160,12 @@ class GoBoard:
             self.update_player_groups(coords)
             self.players_prev_boards[self.player] = str(self.board)
         elif self.hasFinished():
-            scores = self.calculate_scores()
+            scores = self.CalculateScores()
             self.winner = 1 if scores[1] > scores[2] else 2
 
     def CheckFinish(self):
         if (self.players_last_move[1] == (-1,-1) and self.players_last_move[2] == (-1,-1)):
-            scores = self.calculate_scores()
+            scores = self.CalculateScores()
             if scores[1] > scores[2]: 
                 self.winner = 1
             else:
