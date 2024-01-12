@@ -194,22 +194,3 @@ def show_selected_piece(i: int, j: int):
         center=(piece_center_x, piece_center_y),
         radius=PIECE_RADIUS,
     )
-
-# Function to display the game over screen with the winning player
-def game_over(player,new_board):
-    global GRID
-    GRID = new_board
-    SCREEN.fill(BG_COLOR)
-    OVER_FONT = pygame.font.SysFont("monospace", 40)
-    label = OVER_FONT.render(f"Player {player} wins", 1, PIECE_COLOR[player])
-    SCREEN.blit(label,(SCREEN_WIDTH//2-label.get_width()//2, SCREEN_PADDING//2-label.get_height()//2))
-    pygame.display.flip()
-
-# Function to show the count of pieces for each player
-def show_pieces_amount():
-    PIECE_FONT = pygame.font.SysFont("monospace", 40)
-    label1 = PIECE_FONT.render("50",1,PIECE_COLOR[1])    # Replace "50" with a function piece_count(player)
-    label2 = PIECE_FONT.render("50",1,PIECE_COLOR[2])    # Replace "50" with a function piece_count(player)
-    SCREEN.blit(label1,(SCREEN_PADDING//2, SCREEN_PADDING//2-label1.get_height()//2))
-    SCREEN.blit(label2,(SCREEN_WIDTH-SCREEN_PADDING//2-label2.get_width() , SCREEN_PADDING//2-label2.get_height()//2))
-    # Add the icon of each player outside the count

@@ -236,8 +236,6 @@ def GameLoop():
     
     # Main game loop
     while board.winner == 0:
-        # Display the number of pieces for each player
-        graphics.show_pieces_amount()
         
         # Player's move input loop
         selected = False
@@ -284,12 +282,6 @@ def GameLoop():
         print("Tie")
     else:
         print(f"Player {board.winner} wins")
-
-    # Additional display for the end of the game
-    graphics.game_over(board.winner, board.board)
-    graphics.show_pieces_amount()
-    pygame.display.flip()
-    pygame.time.wait(5000)
 
 if __name__ == "__main__":
     GameLoop()
