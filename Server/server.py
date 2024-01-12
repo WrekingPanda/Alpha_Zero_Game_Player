@@ -5,7 +5,7 @@ from ataxx import AttaxxBoard
 from go import GoBoard
 import pygame
 
-Game="G9x9" # "A4x4" "A6x6" "G7x7" "G9x9" "A5x5"
+Game="A4x4" # "A4x4" "A6x6" "G7x7" "G9x9" "A5x5"
 
 def parse_coords(data):
     data = data.split(sep=" ")
@@ -118,4 +118,4 @@ def start_server(host='localhost', port=12345, render=False):
 
 
 if __name__ == "__main__":
-    start_server(render=True)
+    start_server(render=False)
