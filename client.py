@@ -7,6 +7,7 @@ from ataxx import AttaxxBoard
 from fastgo import GoBoard
 from CNN import Net
 from aMCTS_parallel import MCTSParallel,MCTS_Node
+from model_params import MODEL_PARAMS
 
 #Game="A4x4" # "A6x6" "G7x7" "G9x9" "A5x5"
 
@@ -22,6 +23,17 @@ def parse_coords(data):
             coords_list.append(int(coord[-1]))
     coords_list = tuple(coords_list)
     return coords_list
+
+def load_model(game_type,game_size):
+    model = Net(**MODEL_PARAMS.get(game_type+str(game_size)))
+    
+    model_path = "D:/Paulo Alexandre/Ensino_Superior/3_ano/1_semestre/LabIACD/Project2/Alpha_Zero_Game_Player/"
+    model_name = game_type + "_" + str(game_size) + ".pt"
+    
+    model.load_state_dict(torch.load(model_path + model_name, map_location=torch.device("cuda" if torch.cuda.is_available() else "cpu")))
+    model.eval()
+
+    return model
 
 def connect_to_server(host='localhost', port=12345):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -45,20 +57,8 @@ def connect_to_server(host='localhost', port=12345):
     reset_time = False
 
     # the model is loaded here
-    if game_type=="A":
-        if game_size==4:
-            model = Net(game_size,game_size**4,10,32)
-        else:
-            model = Net(game_size,game_size**4,10,64)
-    else:
-        if game_size==9:
-            model = Net(game_size,game_size**2+1,30,64)
-        else:
-            model = Net(game_size,game_size**2+1,20,64)
+    model = load_model(game_type,game_size)
     
-    file_name = game_type + "_" + str(game_size) + ".pt"
-    model.load_state_dict(torch.load(file_name, map_location="cuda" if torch.cuda.is_available() else "cpu"))
-    model.eval()
     mcts = MCTSParallel(model)
     
     while True:
@@ -90,12 +90,18 @@ def connect_to_server(host='localhost', port=12345):
                     print(mcts.roots[0].children[i].originMove, mcts_probs[i])
             action = np.argmax(mcts_probs)
             move = mcts.roots[0].children[action].originMove
-            
+            # move = (i1, j1, i2, j2)
+            # mive_msg = "MOVE i1,j1 i2,j2"
             """ purelly for testing, we can delete the following line later """
             print("Alphazero Move:", move)
 
-            client_socket.send(move.encode())
-            print("Send:", move)
+            if game_type == "A":
+                move_msg = "MOVE " + str(move[0]) + "," + str(move[1]) + " " + str(move[2]) + "," + str(move[3])
+            else:
+                move_msg = "MOVE " + str(move[0]) + "," + str(move[1])
+            msg = str(move_msg)
+            client_socket.send(msg.encode())
+            print("Send:", msg)
         
         # Wait for server response
         response = client_socket.recv(1024).decode()
@@ -111,7 +117,7 @@ def connect_to_server(host='localhost', port=12345):
                 board.NextPlayer()
                 current_agent = 3-current_agent
         elif "VALID" in response:
-            coords = parse_coords(move)
+            coords = parse_coords(msg)
             # process game
             board.Move(coords)
             board.NextPlayer()
