@@ -116,7 +116,7 @@ class GoBoard:
         self.CapturePieces(coords, 3-self.player)
         self.players_prev_boards[self.player] = str(self.board)
 
-    def CheckFinish(self):
+    def CheckFinish(self, render=False):
         if (self.players_last_move[1] == (-1,-1) and self.players_last_move[2] == (-1,-1)):
             scores = self.CalculateScores()
             if scores[1] > scores[2]: self.winner = 1
