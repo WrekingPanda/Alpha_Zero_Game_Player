@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchsummary import summary
 
-class Net(Module):
+class Net(nn.Module):
     def __init__(self, size, action_size, num_resBlocks, num_hidden):
         super().__init__()
 
