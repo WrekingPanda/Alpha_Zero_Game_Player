@@ -100,10 +100,12 @@ def show_piece_place():
             piece_center_x = SCREEN_PADDING + (j+dj)*CELL_LENGTH + CELL_LENGTH//2
             piece_center_y = SCREEN_PADDING + (i+di)*CELL_LENGTH + CELL_LENGTH//2
             pygame.draw.circle(
-                surface=SCREEN, color=GREY if (di,dj)==(0,0) else BG_COLOR,
+                surface=SCREEN, color=BG_COLOR if not (di,dj)==(0,0) else GREY,
                 center=(piece_center_x, piece_center_y), radius=PIECE_RADIUS,
                 width=GRID_LINES_WIDTH
             )
+    draw_go_board()
+    draw_pieces()
 
 # Function to draw the Go game board grid lines
 def draw_go_board():
