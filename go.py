@@ -303,6 +303,23 @@ class GoBoard:
         copy = deepcopy(self)
         copy.board = np.rot90(copy.board, times)
         return copy
+    
+    def flip_vertical(self):
+        copy = deepcopy(self)
+        copy.board = np.flip(copy.board, 0)
+        return copy
+
+    def EncodedGameState(self):
+        encoded_state = np.stack(
+            (self.board == 1, self.board == 2, self.board == 0)
+        ).astype(np.float32)
+        return encoded_state
+    
+    def EncodedGameStateChanged(self, fill_size=0):
+        encoded_state = np.stack(
+            (self.board == self.player, self.board == 3-self.player, self.board == 0)
+        ).astype(np.float32)
+        return encoded_state
 
 
 
