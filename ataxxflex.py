@@ -1,6 +1,6 @@
 from CNN import Net
 from az_parallel2 import AlphaZeroParallel2
-from ataxx import AttaxxBoard
+from ataxx import AtaxxBoard
 from torch.optim import Adam
 FILL_SIZE = 10
 A4_MODEL_PARAMS = {"size":FILL_SIZE, "action_size":FILL_SIZE**4, "num_resBlocks":10, "num_hidden":32} 
@@ -8,7 +8,7 @@ A4_TRAIN_PARAMS = {"n_iterations":2, "self_play_iterations":14, "mcts_iterations
 
 def train():
     model = Net(**A4_MODEL_PARAMS)
-    board = AttaxxBoard(4)
+    board = AtaxxBoard(4)
     optimizer = Adam(model.parameters(), lr=0.01, weight_decay=0.0001)
     Alpha = AlphaZeroParallel2(model, optimizer, board, 'A', data_augmentation=True, **A4_TRAIN_PARAMS, fill_size=FILL_SIZE)
     Alpha.Learn()

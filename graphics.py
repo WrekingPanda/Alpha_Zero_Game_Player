@@ -21,7 +21,7 @@ WOOD_BROWN = (156, 109, 51)
 
 GRID_LINES_WIDTH = 4
 
-GAME_TITLE: Literal['attax', 'a', 'go', 'g'] = None
+GAME_TITLE: Literal['ataxx', 'a', 'go', 'g'] = None
 SCREEN: pygame.Surface = None
 GRID: np.ndarray = None
 
@@ -40,16 +40,16 @@ def is_in_grid(i: int, j: int):
     return (0 <= i and i < GRID.shape[0]) and (0 <= j and j < GRID.shape[1])
 
 # Function to set global variables for the game
-def SET_GLOBALS(game_title: Literal['attax', 'a', 'go', 'g'], grid: np.ndarray):
+def SET_GLOBALS(game_title: Literal['ataxx', 'a', 'go', 'g'], grid: np.ndarray):
     global GAME_TITLE, GRID, BG_COLOR, WINDOW_TITLE, CELL_LENGTH, PIECE_RADIUS, PIECE_COLOR, SELECTED_PIECE_COLOR
     GAME_TITLE = game_title
     GRID = grid
-    BG_COLOR = LIGHT_GREY if game_title == "a" or game_title == "attax" else WOOD_BROWN
-    WINDOW_TITLE =  "Attax" if game_title == "a" or game_title == "attax" else "Go"
+    BG_COLOR = LIGHT_GREY if game_title == "a" or game_title == "ataxx" else WOOD_BROWN
+    WINDOW_TITLE =  "Ataxx" if game_title == "a" or game_title == "ataxx" else "Go"
     CELL_LENGTH = (min(SCREEN_HEIGHT, SCREEN_WIDTH) - 2*SCREEN_PADDING) // max(grid.shape[0], grid.shape[1])
     PIECE_RADIUS = CELL_LENGTH//2 - CELL_LENGTH//8
-    PIECE_COLOR = {1: RED, 2: BLUE} if GAME_TITLE == "attax" or GAME_TITLE == "a" else {1: BLACK, 2: WHITE}
-    SELECTED_PIECE_COLOR = {1: LIGHT_RED, 2: LIGHT_BLUE} if GAME_TITLE == "attax" or GAME_TITLE == "a" else {1: DARK_GREY, 2: LIGHT_GREY}
+    PIECE_COLOR = {1: RED, 2: BLUE} if GAME_TITLE == "ataxx" or GAME_TITLE == "a" else {1: BLACK, 2: WHITE}
+    SELECTED_PIECE_COLOR = {1: LIGHT_RED, 2: LIGHT_BLUE} if GAME_TITLE == "ataxx" or GAME_TITLE == "a" else {1: DARK_GREY, 2: LIGHT_GREY}
 
 # Function to set up the game window
 def SET_SCREEN():
@@ -129,8 +129,8 @@ def draw_go_board():
                 width=GRID_LINES_WIDTH
             )
 
-# Function to draw the Attax game board grid lines
-def draw_attax_board():
+# Function to draw the Ataxx game board grid lines
+def draw_ataxx_board():
     pygame.draw.rect(
         surface=SCREEN, color=BLACK,
         rect=(SCREEN_PADDING, SCREEN_PADDING, SCREEN_WIDTH-2*SCREEN_PADDING, SCREEN_HEIGHT-2*SCREEN_PADDING),
@@ -158,9 +158,9 @@ def draw_board(new_board):
     global GRID
     GRID = new_board
     SCREEN.fill(BG_COLOR)
-    if GAME_TITLE == "a" or GAME_TITLE == "attax": draw_attax_board()
+    if GAME_TITLE == "a" or GAME_TITLE == "ataxx": draw_ataxx_board()
     elif GAME_TITLE == "g" or GAME_TITLE == "go": draw_go_board()
-    if GAME_TITLE in ['attax', 'a', 'go', 'g']: draw_pieces()
+    if GAME_TITLE in ['ataxx', 'a', 'go', 'g']: draw_pieces()
     pygame.display.flip()
 
 # Function to handle mouse click events to get the index of the clicked piece

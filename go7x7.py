@@ -1,6 +1,6 @@
 from CNN import Net
 from az_parallel2 import AlphaZeroParallel2
-from fastgo import GoBoard
+from go import GoBoard
 from torch.optim import Adam
 
 G7_MODEL_PARAMS = {"size":7, "action_size":7**2+1, "num_resBlocks":20, "num_hidden":64} 

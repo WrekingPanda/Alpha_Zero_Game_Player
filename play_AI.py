@@ -9,13 +9,13 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import graphics
-from ataxx import AttaxxBoard
-from fastgo import GoBoard
+from ataxx import AtaxxBoard
+from go import GoBoard
 from CNN import Net
 from aMCTS_parallel import MCTSParallel, MCTS_Node
 from model_params import MODEL_PARAMS
 
-GAME = "A5" # A4 - A5 - A6 - G7 - G9
+GAME = "G9" # A4 - A5 - A6 - G7 - G9
 
 def load_model(game_type="A", game_size=4, model_load_path=None):
     model = Net(**MODEL_PARAMS.get(game_type+str(game_size)))
@@ -25,7 +25,7 @@ def load_model(game_type="A", game_size=4, model_load_path=None):
     return model
 
 def play_game(game_type="A", game_size=4, human_player=1, model_load_path="", mcts_iterations=200, render=False):
-    board = AttaxxBoard(game_size) if game_type=="A" else GoBoard(game_size)
+    board = AtaxxBoard(game_size) if game_type=="A" else GoBoard(game_size)
     board.Start(render)
 
     if render:
@@ -40,6 +40,7 @@ def play_game(game_type="A", game_size=4, human_player=1, model_load_path="", mc
             graphics.draw_board(board.board)
             pygame.display.flip()
         print(board.board)
+        print(board.minimax(2,True,-np.inf,np.inf,board.player))
 
         if board.player == human_player:
             move = []
@@ -103,4 +104,4 @@ def play_game(game_type="A", game_size=4, human_player=1, model_load_path="", mc
             break
 
 if __name__ == "__main__":
-    play_game("A", 5, human_player=2, model_load_path="A5.pt", mcts_iterations=200, render=True)
+    play_game("G", 9, human_player=2, model_load_path="G9_0.pt", mcts_iterations=5, render=True)

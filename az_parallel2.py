@@ -1,7 +1,7 @@
 import numpy as np
 from aMCTS_parallel import MCTSParallel, MCTS_Node
-from ataxx import AttaxxBoard
-from fastgo import GoBoard
+from ataxx import AtaxxBoard
+from go import GoBoard
 
 import random
 #from tqdm import tqdm
@@ -92,10 +92,10 @@ class AlphaZeroParallel2:
         - model: The neural network model.
         - optimizer: The optimizer used for training the neural network.
         - board: The game board.
-        - gameType: Type of the game ('G' for Go, 'A' for Attaxx).
+        - gameType: Type of the game ('G' for Go, 'A' for Ataxx).
         - data_augmentation: Flag for enabling data augmentation during self-play.
         - verbose: Flag for printing progress information.
-        - fill_size: The fill size (used for Attaxx game with a fill).
+        - fill_size: The fill size (used for Ataxx game with a fill).
         - **params: Additional parameters for configuration.
 
     Methods:
@@ -113,10 +113,10 @@ class AlphaZeroParallel2:
             - model: The neural network model.
             - optimizer: The optimizer used for training the neural network.
             - board: The game board.
-            - gameType: Type of the game ('G' for Go, 'A' for Attaxx).
+            - gameType: Type of the game ('G' for Go, 'A' for Ataxx).
             - data_augmentation: Flag for enabling data augmentation during self-play.
             - verbose: Flag for printing progress information.
-            - fill_size: The fill size (used for Attaxx game with a fill).
+            - fill_size: The fill size (used for Ataxx game with a fill).
             - **params: Additional parameters for configuration.
 
         """
@@ -157,9 +157,9 @@ class AlphaZeroParallel2:
         boards_dataset = [[] for _ in range(self.params["n_self_play_parallel"])]
         boards_play_count = [0 for _ in range(self.params["n_self_play_parallel"])]
 
-        # Initialize game boards based on the specified game type (Attaxx or Go)
+        # Initialize game boards based on the specified game type (Ataxx or Go)
         for i in range(self.params["n_self_play_parallel"]):
-            boards[i] = AttaxxBoard(size) if self.gameType == "A" else GoBoard(size)
+            boards[i] = AtaxxBoard(size) if self.gameType == "A" else GoBoard(size)
             boards[i].Start(render=False)
 
             # Adjust the size if the fill_size parameter is set
@@ -237,7 +237,7 @@ class AlphaZeroParallel2:
                         del boards_play_count[i]
                     else:
                         # Initialize a new game board for self-play
-                        boards[i] = AttaxxBoard(size) if self.gameType == "A" else GoBoard(size)
+                        boards[i] = AtaxxBoard(size) if self.gameType == "A" else GoBoard(size)
                         boards[i].Start(render=False)
                         root_boards[i] = MCTS_Node(boards[i], fill_size=self.fill_size)
                         boards_dataset[i] = []

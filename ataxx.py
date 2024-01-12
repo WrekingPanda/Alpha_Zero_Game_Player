@@ -3,7 +3,7 @@ import graphics
 import pygame
 from time import sleep
 
-class AttaxxBoard:
+class AtaxxBoard:
     def __init__(self, dim):
         # Initialize the game board
         self.size = dim
@@ -13,7 +13,7 @@ class AttaxxBoard:
 
     def copy(self):
         # Create a deep copy of the current board state
-        copy = AttaxxBoard(self.size)
+        copy = AtaxxBoard(self.size)
         copy.board = np.copy(self.board)
         copy.player = self.player
         copy.winner = self.winner
@@ -226,7 +226,7 @@ def GameLoop():
     size = int(input("Size: "))
     
     # Initialize the game board
-    board = AttaxxBoard(size)
+    board = AtaxxBoard(size)
     
     # Set up the initial game state and display
     board.Start(render=True)
