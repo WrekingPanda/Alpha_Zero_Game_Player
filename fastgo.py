@@ -141,6 +141,49 @@ class GoBoard:
             return self.size**2
         i, j = move
         return j + i*self.size
+    
+    def score(self, player):
+        points = self.CalculateScores()
+        if player==1:
+            return points[1]-points[2]
+        return points[2]-points[1]
+    
+    def minimax(self,depth, max_player, alpha, beta, player):
+        self.CheckFinish()
+        if self.winner==player:
+            return None,10000
+        if self.winner==3-player:
+            return None,-10000
+        if depth==0:
+            return None,self.score(player)
+        if max_player:
+            value = -np.inf
+            for move in self.PossibleMoves():
+                copy = self.copy()
+                copy.Move(move)
+                copy.NextPlayer()
+                new = copy.minimax(depth-1,False,alpha,beta, player)[1]
+                if new > value:
+                    value = new
+                    best = move
+                if value >= beta:
+                    break
+                alpha = max(alpha,value)
+            return best,value
+        else:
+            value = np.inf
+            for move in self.PossibleMoves():
+                copy = self.copy()
+                copy.Move(move)
+                copy.NextPlayer()
+                new = copy.minimax(depth-1,True,alpha,beta, player)[1]
+                if new < value:
+                    value = new
+                    best = move
+                if value <= alpha:
+                    break
+                beta = min(beta,value)
+            return best,value
 
     def CalculateScores(self):
         scores = {BLACK:0, WHITE:5.5}
