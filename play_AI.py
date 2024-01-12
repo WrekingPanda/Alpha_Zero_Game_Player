@@ -15,7 +15,7 @@ from CNN import Net
 from aMCTS_parallel import MCTSParallel, MCTS_Node
 from model_params import MODEL_PARAMS
 
-GAME = "G9" # A4 - A5 - A6 - G7 - G9
+GAME = "A4" # A4 - A5 - A6 - G7 - G9
 
 def load_model(game_type="A", game_size=4, model_load_path=None):
     model = Net(**MODEL_PARAMS.get(game_type+str(game_size)))
@@ -104,4 +104,4 @@ def play_game(game_type="A", game_size=4, human_player=1, model_load_path="", mc
             break
 
 if __name__ == "__main__":
-    play_game("G", 9, human_player=2, model_load_path="G9_0.pt", mcts_iterations=5, render=True)
+    play_game("A", 4, human_player=2, model_load_path="d:/Paulo Alexandre/Ensino_Superior/3_ano/1_semestre/LabIACD/Project2/Alpha_Zero_Game_Player/Final_Models/A4_treinado_2_16.pt", mcts_iterations=1, render=True)
