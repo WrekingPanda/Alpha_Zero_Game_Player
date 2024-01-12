@@ -1,9 +1,9 @@
 import pygame
 import numpy as np
 import sys
-
 from typing import Literal
 
+# Constants for screen dimensions and colors
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 800
 SCREEN_PADDING = 140
@@ -35,11 +35,11 @@ SELECTED_PIECE_COLOR = None
 
 SELECTED_COORDS = (None, None)
 
-
+# Function to check if a given index is within the grid boundaries
 def is_in_grid(i: int, j: int):
     return (0 <= i and i < GRID.shape[0]) and (0 <= j and j < GRID.shape[1])
 
-
+# Function to set global variables for the game
 def SET_GLOBALS(game_title: Literal['attax', 'a', 'go', 'g'], grid: np.ndarray):
     global GAME_TITLE, GRID, BG_COLOR, WINDOW_TITLE, CELL_LENGTH, PIECE_RADIUS, PIECE_COLOR, SELECTED_PIECE_COLOR
     GAME_TITLE = game_title
@@ -51,26 +51,26 @@ def SET_GLOBALS(game_title: Literal['attax', 'a', 'go', 'g'], grid: np.ndarray):
     PIECE_COLOR = {1: RED, 2: BLUE} if GAME_TITLE == "attax" or GAME_TITLE == "a" else {1: BLACK, 2: WHITE}
     SELECTED_PIECE_COLOR = {1: LIGHT_RED, 2: LIGHT_BLUE} if GAME_TITLE == "attax" or GAME_TITLE == "a" else {1: DARK_GREY, 2: LIGHT_GREY}
 
-
-# sets the game window
+# Function to set up the game window
 def SET_SCREEN():
     global SCREEN
     SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption(WINDOW_TITLE)
     SCREEN.fill(BG_COLOR)
 
-
+# Function to set the selected piece coordinates
 def set_selected_piece(i: int, j: int):
     global SELECTED_COORDS
     SELECTED_COORDS = (i,j)
 
+# Function to unselect the piece
 def unselect_piece():
     global SELECTED_COORDS
     SELECTED_COORDS = (None, None)
 
-
+# Function to draw a game piece on the screen
 def draw_piece(i: int, j: int):
-    if  (0 <= i and i < GRID.shape[0]) and (0 <= j and j < GRID.shape[1]):
+    if (0 <= i and i < GRID.shape[0]) and (0 <= j and j < GRID.shape[1]):
         piece_center_x = SCREEN_PADDING + j*CELL_LENGTH + CELL_LENGTH//2
         piece_center_y = SCREEN_PADDING + i*CELL_LENGTH + CELL_LENGTH//2
         pygame.draw.circle(
@@ -83,14 +83,14 @@ def draw_piece(i: int, j: int):
             width=GRID_LINES_WIDTH
         )
 
-
+# Function to draw all game pieces on the screen
 def draw_pieces():
     for i in range(GRID.shape[0]):
         for j in range(GRID.shape[1]):
             if GRID[i][j] == 0: continue
             draw_piece(i, j)
 
-
+# Function to display potential piece placement locations
 def show_piece_place():
     x, y = pygame.mouse.get_pos()
     j = (x - SCREEN_PADDING) // CELL_LENGTH
@@ -105,7 +105,7 @@ def show_piece_place():
                 width=GRID_LINES_WIDTH
             )
 
-
+# Function to draw the Go game board grid lines
 def draw_go_board():
     for i in range(GRID.shape[0]):
         for j in range(GRID.shape[1]):
@@ -129,7 +129,7 @@ def draw_go_board():
                 width=GRID_LINES_WIDTH
             )
 
-
+# Function to draw the Attax game board grid lines
 def draw_attax_board():
     pygame.draw.rect(
         surface=SCREEN, color=BLACK,
@@ -153,7 +153,7 @@ def draw_attax_board():
             width=GRID_LINES_WIDTH
         )
 
-
+# Function to draw the entire game board
 def draw_board(new_board):
     global GRID
     GRID = new_board
@@ -163,7 +163,7 @@ def draw_board(new_board):
     if GAME_TITLE in ['attax', 'a', 'go', 'g']: draw_pieces()
     pygame.display.flip()
 
-
+# Function to handle mouse click events to get the index of the clicked piece
 def piece_index_click():
     while True:
         for event in pygame.event.get():
@@ -180,8 +180,7 @@ def piece_index_click():
         show_piece_place()
         pygame.display.flip()
 
-
-
+# Function to highlight a selected piece
 def show_selected_piece(i: int, j: int):
     piece_center_x = SCREEN_PADDING + j*CELL_LENGTH + CELL_LENGTH//2
     piece_center_y = SCREEN_PADDING + i*CELL_LENGTH + CELL_LENGTH//2
@@ -196,8 +195,7 @@ def show_selected_piece(i: int, j: int):
         radius=PIECE_RADIUS,
     )
 
-########################################################
-
+# Function to display the game over screen with the winning player
 def game_over(player,new_board):
     global GRID
     GRID = new_board
@@ -207,12 +205,11 @@ def game_over(player,new_board):
     SCREEN.blit(label,(SCREEN_WIDTH//2-label.get_width()//2, SCREEN_PADDING//2-label.get_height()//2))
     pygame.display.flip()
 
-
-
+# Function to show the count of pieces for each player
 def show_pieces_amount():
     PIECE_FONT = pygame.font.SysFont("monospace", 40)
-    label1 = PIECE_FONT.render("50",1,PIECE_COLOR[1])    #trocar "50" por função piece_count(player)
-    label2 = PIECE_FONT.render("50",1,PIECE_COLOR[2])    #trocar "50" por função piece_count(player)
+    label1 = PIECE_FONT.render("50",1,PIECE_COLOR[1])    # Replace "50" with a function piece_count(player)
+    label2 = PIECE_FONT.render("50",1,PIECE_COLOR[2])    # Replace "50" with a function piece_count(player)
     SCREEN.blit(label1,(SCREEN_PADDING//2, SCREEN_PADDING//2-label1.get_height()//2))
     SCREEN.blit(label2,(SCREEN_WIDTH-SCREEN_PADDING//2-label2.get_width() , SCREEN_PADDING//2-label2.get_height()//2))
-    # Falta adicionar o ícone de cada player do lado de fora do count
+    # Add the icon of each player outside the count
