@@ -151,11 +151,13 @@ class GoBoard:
 
     def PossibleMoves(self):
         # Generate all possible valid moves for the current player
+        count = 0
         for i in range(self.size):
             for j in range(self.size):
                 if self.ValidMove(i, j):
+                    count+=1
                     yield (i, j)
-        if np.sum(self.board == 0) < self.size**2 // 4:
+        if count == 0 or np.sum(self.board == 0) < 5:
             yield (-1, -1)
 
     def MoveToAction(self, move, fill_size=0):
