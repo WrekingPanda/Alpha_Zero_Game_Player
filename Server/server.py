@@ -1,7 +1,7 @@
 import socket
 import time
 import graphics
-from ataxx import AttaxxBoard
+from ataxx import AtaxxBoard
 from go import GoBoard
 import pygame
 
@@ -42,7 +42,7 @@ def start_server(host='localhost', port=12345, render=False):
     game_type = Game[0]
     game_size = int(Game[-1])
     
-    board = AttaxxBoard(game_size) if game_type == "A" else GoBoard(game_size)
+    board = AtaxxBoard(game_size) if game_type == "A" else GoBoard(game_size)
     board.Start()
     play_attempts = 0
 

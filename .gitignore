@@ -2,3 +2,5 @@ __pycache__
 Models
 Optimizers
 Final_Models
+.ipynb_checkpoints
+*.pt
