@@ -103,4 +103,4 @@ def play_game(game_type="A", game_size=4, human_player=1, model_load_path="", mc
             break
 
 if __name__ == "__main__":
-    play_game("G", 9, human_player=1, model_load_path="G9.pt", mcts_iterations=50, render=True)
+    play_game("A", 4, human_player=1, model_load_path="A4.pt", mcts_iterations=50, render=True)

@@ -104,7 +104,8 @@ def show_piece_place():
                 center=(piece_center_x, piece_center_y), radius=PIECE_RADIUS,
                 width=GRID_LINES_WIDTH
             )
-    draw_go_board()
+    if "g" in GAME_TITLE:
+        draw_go_board()
     draw_pieces()
 
 # Function to draw the Go game board grid lines
