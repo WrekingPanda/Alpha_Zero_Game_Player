@@ -3,6 +3,8 @@ import graphics
 import pygame
 from time import sleep
 
+VECTOR_INDEX = {(2,-2):0,(2,0):1,(2,2):2,(0,2):3,(-2,2):4,(-2,0):5,(-2,-2):6,(0,-2):7,(1,-1):8,(1,0):9,(1,1):10,(0,1):11,(-1,1):12,(-1,0):13,(-1,-1):14,(0,-1):15}
+
 class AtaxxBoard:
     def __init__(self, dim):
         # Initialize the game board
@@ -54,13 +56,14 @@ class AtaxxBoard:
 
     def MoveToAction(self, move, fill_size=0):
         # Convert a move to an action index
+        i1, j1, i2, j2 = move
+        vector = (i2-i1,j2-j1)
         if fill_size == 0 or fill_size == self.size:
-            i1, j1, i2, j2 = move
             size = self.size
-            action = j1 + i1 * size + j2 * (size ** 2) + i2 * (size ** 3)
+            #action = j1 + i1 * size + j2 * (size ** 2) + i2 * (size ** 3)
+            action = 16*(j1+i1*size) + VECTOR_INDEX[vector]
             return action
         else:
-            i1, j1, i2, j2 = move
             action = j1 + i1 * fill_size + j2 * (fill_size ** 2) + i2 * (fill_size ** 3)
             return action
 
