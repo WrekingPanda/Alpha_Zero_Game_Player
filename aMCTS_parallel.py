@@ -107,7 +107,7 @@ class MCTSParallel:
 
         # Calculate action space size based on game type and fill size
         if self.fill_size == 0:
-            action_space_size = self.roots[0].board.size ** 4 if type(self.roots[0].board) == AtaxxBoard else \
+            action_space_size = 16 * self.roots[0].board.size ** 2 if type(self.roots[0].board) == AtaxxBoard else \
                 (self.roots[0].board.size ** 2) + 1
         else:
             action_space_size = self.fill_size ** 4
@@ -165,7 +165,7 @@ class MCTSParallel:
 
         # Return the actions' probabilities for each game
         if self.fill_size == 0:
-            action_space_size = self.roots[0].board.size ** 4 if type(self.roots[0].board) == AtaxxBoard else \
+            action_space_size = 16 * self.roots[0].board.size ** 2 if type(self.roots[0].board) == AtaxxBoard else \
                 (self.roots[0].board.size ** 2) + 1
         else:
             action_space_size = self.fill_size ** 4

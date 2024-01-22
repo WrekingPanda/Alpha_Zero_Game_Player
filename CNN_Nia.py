@@ -10,7 +10,7 @@ def conv1x1(in_planes, out_planes):
 
 
 class Net(nn.Module):
-    def __init__(self, board_size, action_size, num_resBlocks=20, num_hidden=128):
+    def __init__(self, size, action_size, num_resBlocks=20, num_hidden=128):
         super().__init__()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -34,7 +34,7 @@ class Net(nn.Module):
             nn.ReLU(),
             nn.Flatten(),
 
-            nn.Linear(in_features=board_size**2, out_features=num_hidden),
+            nn.Linear(in_features=size**2, out_features=num_hidden),
             nn.ReLU(),
 
             nn.Linear(in_features=num_hidden, out_features=1),
@@ -48,7 +48,7 @@ class Net(nn.Module):
             nn.BatchNorm2d(2),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(2*board_size**2, out_features=(action_size)),
+            nn.Linear(2*size**2, out_features=(action_size)),
             nn.Softmax(dim=1)
         )
 
