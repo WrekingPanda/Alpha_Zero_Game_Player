@@ -11,18 +11,17 @@ from model_params import MODEL_PARAMS
 
 #Game="A4x4" # "A6x6" "G7x7" "G9x9" "A5x5"
 
-def parse_coords(data):
-    data = data.split(sep=" ")
-    coords_list = [] # go: [i, j] | attax: [i1, j1, i2, j2]
-    for coord in data[1:]:
-        if "-" in coord:
-            coords_list.append(-1)
-            coords_list.append(-1)
-        else:
-            coords_list.append(int(coord[0]))
-            coords_list.append(int(coord[-1]))
-    coords_list = tuple(coords_list)
-    return coords_list
+def parse_coords(data, game_type):
+    # attaxx: "MOVE i,j, i,j"
+    # go:     "MOVE i,j" or "PASS"
+    if game_type == "A":
+        coords = (int(data[5]), int(data[7]), int(data[10]), int(data[12]))
+        return coords
+    elif game_type == "G":
+        if "P" in data: return (-1,-1)
+        coords = (int(data[5]), int(data[7]))
+        return coords
+    return None
 
 def load_model(game_type,game_size):
     model = Net(**MODEL_PARAMS.get(game_type+str(game_size)))
@@ -90,8 +89,10 @@ def connect_to_server(host='localhost', port=12345):
 
             if game_type == "A":
                 move_msg = "MOVE " + str(move[0]) + "," + str(move[1]) + " " + str(move[2]) + "," + str(move[3])
-            else:
+            elif move != (-1,-1):
                 move_msg = "MOVE " + str(move[0]) + "," + str(move[1])
+            else:
+                move_msg = "PASS"
             msg = str(move_msg)
             try:
                 client_socket.send(msg.encode())
@@ -115,13 +116,13 @@ def connect_to_server(host='localhost', port=12345):
                 board.NextPlayer()
                 current_agent = 3-current_agent
         elif "VALID" in response:
-            coords = parse_coords(msg)
+            coords = parse_coords(msg, game_type)
             # process game
             board.Move(coords)
             board.NextPlayer()
             current_agent = 3-current_agent
-        elif "MOVE" in response:
-            coords = parse_coords(response)
+        elif "MOVE" in response or "PASS" in response:
+            coords = parse_coords(response, game_type)
             # process game
             board.Move(coords)
             board.NextPlayer()

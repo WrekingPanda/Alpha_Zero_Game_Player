@@ -115,10 +115,7 @@ class GoBoard:
     
     def score(self, player):
         # Calculate the score difference between players
-        points = self.CalculateScores()
-        if player == 1:
-            return points[1] - points[2]
-        return points[2] - points[1]
+        return self.CalculateScores()
 
     def minimax(self, depth, max_player, alpha, beta, player):
         # Minimax algorithm with alpha-beta pruning for finding the best move
